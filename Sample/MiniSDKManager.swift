@@ -14,7 +14,14 @@ enum AppType : String {
 }
 
 @objcMembers
-class MiniSDKManager: NSObject, IAppDelegate {
+class MiniSDKManager: NSObject, IAppDelegate, BridgeProviderFactory {
+    
+    let walletProvider = WalletBridgeProvider()
+    
+    func buildBridgeProvider(id: String?, type: String, url: String?) -> (any MiniAppX.BridgeProvider)? {
+        return walletProvider
+    }
+    
     
     let SHORTCUT_LINK = "miniappx_link"
     let SHORTCUT_TYPE = "miniappx_type"
@@ -34,7 +41,7 @@ class MiniSDKManager: NSObject, IAppDelegate {
     private var shortcutItem: UIApplicationShortcutItem? = nil
     
     
-    let idToken = "Provider JWT TOKEN!"
+    let idToken = "eyJhbGciOiJSUzI1NiIsImtpZCI6ImhrOTV2M3p6YjdjczltNHJlYXN3dXl6aHRoemFkZ3cxczh0eTRjbjYiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjUzNTIzMjc0ODAsImlhdCI6MTc1MjMyNzQ4MCwic3ViIjoidGVzdCIsInVzZXJfaWQiOiJ0ZXN0IiwidXNlcm5hbWUiOiJ0ZXN0In0.Kv82MMZp-QvWnPxHwPFWy0RnJ36AepIYqqaX9S64ABYLnIHk51mXDypTEd5dMUc5kp_UT1H9NxTTArXxsJCRBl84zp2-vN4cswXixVcZj4f_moadTQQvBEnZ52VUh-xIbFMSPFrIjsbDxIsBMUYl5DAMvhr2swnCswdzm5x6qTHoxuqCEZMX0CwJvZZbbMU3w5uwZ2CmoAa27TURdxH0_7UqVGfojrQhTfEld5vfgZztWTQUHZY0t6WmZ1rwOXEJuqaePX3kyhfytECFlx6Nd2xwNw2DHOhDGFEM47AVv8J7riFF3etrkVkhHSz5JXyIhfG7PSldHgdvbRk1qtDGfA"
     
     private override init() {
         self.openPlatformPlugin = PluginsManager.getInstance().getPlugin(PluginName.openPlatform.rawValue)!
@@ -65,9 +72,9 @@ class MiniSDKManager: NSObject, IAppDelegate {
     
     func signIn() {
         self.openPlatformPlugin.signIn(
-            verifier: "123",
-            isDev: true,
-            apiHost: "your open service api host",
+            verifier: "3611ba4b-9a1a-4ac0-97eb-9a5fa5b60ec5",
+            isDev: false,
+            apiHost: "https://api.m.openweb3.io",
             idTokenProvider: tokenProvider,
             onVerifierSuccess: { [weak self] in
                 // Do something
@@ -88,14 +95,14 @@ class MiniSDKManager: NSObject, IAppDelegate {
                                               mePath: ["https://miniappx.io","https://t.me"],
                                               window: window,
                                               appDelegate: MiniSDKManager.shared)
-                .languageCode("ja")
+                .languageCode("zh")
                 .userInterfaceStyle(.light)
                 .maxCachePage(5)
-                //.bridgeProviderFactory(MyBridgeProviderFactory())
+                .bridgeProviderFactory(self)
                 .resourceProvider(nil)
                 .floatWindowSize(width: 90.0, height: 159.0)
-                .privacyUrl("privacy url")
-                .termsOfServiceUrl("terms of service url")
+                .privacyUrl("https://docs.openweb3.io/docs/standard-miniapp-privacy-policy")
+                .termsOfServiceUrl("https://docs.openweb3.io/docs/terms-of-service-for-mini-apps")
                 .build()
             
             miniAppService.setup(config: appConfig) {
@@ -236,6 +243,17 @@ class MiniSDKManager: NSObject, IAppDelegate {
         - linkOrText: Share links or text.
     */
     func shareLinkOrText(linkOrText: String) {
+        
+    }
+    
+    /**
+     Share link  and  text.
+     
+     - Parameters:
+        - link: Share link
+        - text: Sare text.
+    */
+    func shareLink(link: String?, text: String?) {
         
     }
     

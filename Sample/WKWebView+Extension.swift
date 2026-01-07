@@ -66,8 +66,4 @@ public extension TypeWrapper where T == WKWebView {
         let script = String(format: "trustwallet.\(network.rawValue).sendResponse(%ld, [%@])", id, array.joined(separator: ","))
         value.evaluateJavaScript(script)
     }
-
-    func removeScriptHandler() {
-        value.configuration.userContentController.removeScriptMessageHandler(forName: TrustWeb3Provider.scriptHandlerName)
-    }
 }

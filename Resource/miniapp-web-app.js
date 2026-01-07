@@ -1,24 +1,14 @@
 // WebView
 (function () {
-
-  console.log("==============[MiniAppX.WebApp] init Begin!")
-  console.log("==============[MiniAppX.WebApp] location is", location.href)
-
   var eventHandlers = {};
 
-  // 1. Get anchor value from h5 url
   var locationHash = '';
   try {
     locationHash = location.hash.toString();
   } catch (e) {}
 
-  // 2. Parse anchor value, return key-value array
   var initParams = urlParseHashParams(locationHash);
-
-  // 3. Read json session value with key __MiniAppX__initParams
   var storedParams = sessionStorageGet('initParams');
-
-  // 4. Merge storedParams into initParams
   if (storedParams) {
     for (var key in storedParams) {
       if (typeof initParams[key] === 'undefined') {
@@ -26,53 +16,38 @@
       }
     }
   }
-
-  // 5. Override local session value with initParams
   sessionStorageSet('initParams', initParams);
 
-  // 6. Determine if it's iFrame, get iFrame style
   var isIframe = false, iFrameStyle;
   try {
-    isIframe = (window.parent != null && window !== window.parent);
-    console.log("==============[MiniAppX.WebApp] isIframe is ", isIframe)
+    isIframe = (window.parent != null && window != window.parent);
     if (isIframe) {
-      console.log("==============[MiniAppX.WebApp] window.addEventListener")
-      // 7. Listen to window messages
       window.addEventListener('message', function (event) {
-                  // 8. Check if the event source is the parent window of the current window, if not, return directly without executing subsequent operations.
-        console.log("==============[MiniAppX.WebApp] get new message: " + JSON.stringify(event.data))
         if (event.source !== window.parent) return;
         try {
-          // 9. Get json data from event
           var dataParsed = JSON.parse(event.data);
         } catch (e) {
           return;
         }
-                  // 10. Filter illegal events, i.e., data without event type
         if (!dataParsed || !dataParsed.eventType) {
           return;
         }
-        if (dataParsed.eventType === 'set_custom_style') {
-          // 11. Set custom style message
-          if (event.origin === 'http://web.MiniAppX.io') {
+        if (dataParsed.eventType == 'set_custom_style') {
+          if (event.origin === 'https://web.telegram.org') {
             iFrameStyle.innerHTML = dataParsed.eventData;
           }
-        } else if (dataParsed.eventType === 'reload_iframe') {
+        } else if (dataParsed.eventType == 'reload_iframe') {
           try {
-            // 12. Reload iframe
             window.parent.postMessage(JSON.stringify({eventType: 'iframe_will_reload'}), '*');
           } catch (e) {}
           location.reload();
-                  } else {
-            // 13. Handle other messages
+        } else {
           receiveEvent(dataParsed.eventType, dataParsed.eventData);
         }
       });
-      // 14. Create style element and append to html head
       iFrameStyle = document.createElement('style');
       document.head.appendChild(iFrameStyle);
       try {
-        // 15. Send iframe initialization complete event
         window.parent.postMessage(JSON.stringify({eventType: 'iframe_ready', eventData: {reload_supported: true}}), '*');
       } catch (e) {}
     }
@@ -150,7 +125,6 @@
     return url + addHash;
   }
 
-  // Send message to WebView, three ways in total
   function postEvent(eventType, callback, eventData) {
     if (!callback) {
       callback = function () {};
@@ -158,7 +132,7 @@
     if (eventData === undefined) {
       eventData = '';
     }
-    console.log('==============[MiniAppX.WebApp] > postEvent', eventType, JSON.stringify(eventData));
+    console.log('[MiniAppX.WebView] > postEvent', eventType, eventData);
 
     if (window.MiniAppXWebviewProxy !== undefined) {
       MiniAppXWebviewProxy.postEvent(eventType, JSON.stringify(eventData));
@@ -170,7 +144,7 @@
     }
     else if (isIframe) {
       try {
-        var trustedTarget = 'https://web.MiniAppX.io';
+        var trustedTarget = 'https://web.telegram.org';
         // For now we don't restrict target, for testing purposes
         trustedTarget = '*';
         window.parent.postMessage(JSON.stringify({eventType: eventType, eventData: eventData}), trustedTarget);
@@ -184,22 +158,19 @@
     }
   };
 
-  // Receive event
   function receiveEvent(eventType, eventData) {
-    console.log('==============[MiniAppX.WebApp] < receiveEvent', eventType, JSON.stringify(eventData));
+    console.log('[MiniAppX.WebView] < receiveEvent', eventType, eventData);
     callEventCallbacks(eventType, function(callback) {
       callback(eventType, eventData);
     });
   }
 
-  // Dispatch event
   function callEventCallbacks(eventType, func) {
     var curEventHandlers = eventHandlers[eventType];
     if (curEventHandlers === undefined ||
         !curEventHandlers.length) {
       return;
     }
-
     for (var i = 0; i < curEventHandlers.length; i++) {
       try {
         func(curEventHandlers[i]);
@@ -207,11 +178,7 @@
     }
   }
 
-  // Subscribe to event
   function onEvent(eventType, callback) {
-
-    console.log('==============[MiniAppX.WebApp] < onEvent ', eventType);
-
     if (eventHandlers[eventType] === undefined) {
       eventHandlers[eventType] = [];
     }
@@ -221,7 +188,6 @@
     }
   };
 
-  // Remove subscription event
   function offEvent(eventType, callback) {
     if (eventHandlers[eventType] === undefined) {
       return;
@@ -233,7 +199,6 @@
     eventHandlers[eventType].splice(index, 1);
   };
 
-  // Open an image
   function openProtoUrl(url) {
     if (!url.match(/^(web\+)?tgb?:\/\/./)) {
       return false;
@@ -266,19 +231,16 @@
     return true;
   }
 
-  // Save session
   function sessionStorageSet(key, value) {
     try {
-      window.sessionStorage.setItem('__MiniAppX__' + key, JSON.stringify(value));
+      window.sessionStorage.setItem('__telegram__' + key, JSON.stringify(value));
       return true;
     } catch(e) {}
     return false;
   }
-
-  // Get session
   function sessionStorageGet(key) {
     try {
-      return JSON.parse(window.sessionStorage.getItem('__MiniAppX__' + key));
+      return JSON.parse(window.sessionStorage.getItem('__telegram__' + key));
     } catch(e) {}
     return null;
   }
@@ -290,7 +252,6 @@
     }
   }
 
-  // 16. Register MiniAppX.WebView event methods
   if (!window.MiniAppX) {
     window.MiniAppX = {};
   }
@@ -305,7 +266,6 @@
     sayHello: sayHello
   };
 
-  // 17. Register MiniAppX Utils methods
   window.MiniAppX.Utils = {
     urlSafeDecode: urlSafeDecode,
     urlParseQueryString: urlParseQueryString,
@@ -334,10 +294,15 @@
   var WebApp = {};
   var webAppInitData = '', webAppInitDataUnsafe = {};
   var themeParams = {}, colorScheme = 'light';
-  var webAppVersion = '1.0';
+  var webAppVersion = '6.0';
   var webAppPlatform = 'unknown';
+  var webAppIsActive = true;
+  var webAppIsFullscreen = false;
+  var webAppIsOrientationLocked = false;
+  var webAppBackgroundColor = 'bg_color';
+  var webAppHeaderColorKey = 'bg_color';
+  var webAppHeaderColor = null;
 
-  // 18. Further parse tgWebAppData from session and anchor, including version, platform, etc.
   if (initParams.tgWebAppData && initParams.tgWebAppData.length) {
     webAppInitData = initParams.tgWebAppData;
     webAppInitDataUnsafe = Utils.urlParseQueryString(webAppInitData);
@@ -351,8 +316,7 @@
       } catch (e) {}
     }
   }
-
-  // 19. Parse tgWebAppThemeParams style data, update style
+  var stored_theme_params = Utils.sessionStorageGet('themeParams');
   if (initParams.tgWebAppThemeParams && initParams.tgWebAppThemeParams.length) {
     var themeParamsRaw = initParams.tgWebAppThemeParams;
     try {
@@ -362,11 +326,21 @@
       }
     } catch (e) {}
   }
-
-  // 20. Find themeParams data in session, update style
-  var theme_params = Utils.sessionStorageGet('themeParams');
-  if (theme_params) {
-    setThemeParams(theme_params);
+  if (stored_theme_params) {
+    setThemeParams(stored_theme_params);
+  }
+  var stored_def_colors = Utils.sessionStorageGet('defaultColors');
+  if (initParams.tgWebAppDefaultColors && initParams.tgWebAppDefaultColors.length) {
+    var defColorsRaw = initParams.tgWebAppDefaultColors;
+    try {
+      var def_colors = JSON.parse(defColorsRaw);
+      if (def_colors) {
+        setDefaultColors(def_colors);
+      }
+    } catch (e) {}
+  }
+  if (stored_def_colors) {
+    setDefaultColors(stored_def_colors);
   }
   if (initParams.tgWebAppVersion) {
     webAppVersion = initParams.tgWebAppVersion;
@@ -375,17 +349,31 @@
     webAppPlatform = initParams.tgWebAppPlatform;
   }
 
-  // Style change
+  var stored_fullscreen = Utils.sessionStorageGet('isFullscreen');
+  if (initParams.tgWebAppFullscreen) {
+    setFullscreen(true);
+  }
+  if (stored_fullscreen) {
+    setFullscreen(stored_fullscreen == 'yes');
+  }
+
+  var stored_orientation_lock = Utils.sessionStorageGet('isOrientationLocked');
+  if (stored_orientation_lock) {
+    setOrientationLock(stored_orientation_lock == 'yes');
+  }
+
   function onThemeChanged(eventType, eventData) {
     if (eventData.theme_params) {
       setThemeParams(eventData.theme_params);
       window.MiniAppX.WebApp.MainButton.setParams({});
+      window.MiniAppX.WebApp.SecondaryButton.setParams({});
+      updateHeaderColor();
       updateBackgroundColor();
+      updateBottomBarColor();
       receiveWebViewEvent('themeChanged');
     }
   }
 
-  // Height change event
   var lastWindowHeight = window.innerHeight;
   function onViewportChanged(eventType, eventData) {
     if (eventData.height) {
@@ -394,7 +382,6 @@
     }
   }
 
-  //
   function onWindowResize(e) {
     if (lastWindowHeight != window.innerHeight) {
       lastWindowHeight = window.innerHeight;
@@ -404,7 +391,27 @@
     }
   }
 
-  // Open link
+  function onSafeAreaChanged(eventType, eventData) {
+    if (eventData) {
+      setSafeAreaInset(eventData);
+    }
+  }
+  function onContentSafeAreaChanged(eventType, eventData) {
+    if (eventData) {
+      setContentSafeAreaInset(eventData);
+    }
+  }
+
+  function onVisibilityChanged(eventType, eventData) {
+    if (eventData.is_visible) {
+      webAppIsActive = true;
+      receiveWebViewEvent('activated');
+    } else {
+      webAppIsActive = false;
+      receiveWebViewEvent('deactivated');
+    }
+  }
+
   function linkHandler(e) {
     if (e.metaKey || e.ctrlKey) return;
     var el = e.target;
@@ -414,7 +421,7 @@
     if (el.tagName == 'A' &&
         el.target != '_blank' &&
         (el.protocol == 'http:' || el.protocol == 'https:') &&
-        el.hostname == 'MiniAppX.io') {
+        el.hostname == 't.me') {
       WebApp.openTgLink(el.href);
       e.preventDefault();
     }
@@ -447,6 +454,16 @@
     }
   }
 
+  function setFullscreen(is_fullscreen) {
+    webAppIsFullscreen = !!is_fullscreen;
+    Utils.sessionStorageSet('isFullscreen', webAppIsFullscreen ? 'yes' : 'no');
+  }
+
+  function setOrientationLock(is_locked) {
+    webAppIsOrientationLocked = !!is_locked;
+    Utils.sessionStorageSet('isOrientationLocked', webAppIsOrientationLocked ? 'yes' : 'no');
+  }
+
   function setThemeParams(theme_params) {
     // temp iOS fix
     if (theme_params.bg_color == '#1c1c1d' &&
@@ -466,6 +483,27 @@
       }
     }
     Utils.sessionStorageSet('themeParams', themeParams);
+  }
+
+  function setDefaultColors(def_colors) {
+    if (colorScheme == 'dark') {
+      if (def_colors.bg_dark_color) {
+        webAppBackgroundColor = def_colors.bg_dark_color;
+      }
+      if (def_colors.header_dark_color) {
+        webAppHeaderColorKey = null;
+        webAppHeaderColor = def_colors.header_dark_color;
+      }
+    } else {
+      if (def_colors.bg_color) {
+        webAppBackgroundColor = def_colors.bg_color;
+      }
+      if (def_colors.header_color) {
+        webAppHeaderColorKey = null;
+        webAppHeaderColor = def_colors.header_color;
+      }
+    }
+    Utils.sessionStorageSet('defaultColors', def_colors);
   }
 
   var webAppCallbacks = {};
@@ -498,22 +536,68 @@
     }
     var height, stable_height;
     if (viewportHeight !== false) {
-      height = (viewportHeight - mainButtonHeight) + 'px';
+      height = (viewportHeight - bottomBarHeight) + 'px';
     } else {
-      height = mainButtonHeight ? 'calc(100vh - ' + mainButtonHeight + 'px)' : '100vh';
+      height = bottomBarHeight ? 'calc(100vh - ' + bottomBarHeight + 'px)' : '100vh';
     }
     if (viewportStableHeight !== false) {
-      stable_height = (viewportStableHeight - mainButtonHeight) + 'px';
+      stable_height = (viewportStableHeight - bottomBarHeight) + 'px';
     } else {
-      stable_height = mainButtonHeight ? 'calc(100vh - ' + mainButtonHeight + 'px)' : '100vh';
+      stable_height = bottomBarHeight ? 'calc(100vh - ' + bottomBarHeight + 'px)' : '100vh';
     }
     setCssProperty('viewport-height', height);
     setCssProperty('viewport-stable-height', stable_height);
   }
 
+  var safeAreaInset = {top: 0, bottom: 0, left: 0, right: 0};
+  function setSafeAreaInset(data) {
+    if (typeof data !== 'undefined') {
+      if (typeof data.top !== 'undefined') {
+        safeAreaInset.top = data.top;
+      }
+      if (typeof data.bottom !== 'undefined') {
+        safeAreaInset.bottom = data.bottom;
+      }
+      if (typeof data.left !== 'undefined') {
+        safeAreaInset.left = data.left;
+      }
+      if (typeof data.right !== 'undefined') {
+        safeAreaInset.right = data.right;
+      }
+      receiveWebViewEvent('safeAreaChanged');
+    }
+    setCssProperty('safe-area-inset-top', safeAreaInset.top + 'px');
+    setCssProperty('safe-area-inset-bottom', safeAreaInset.bottom + 'px');
+    setCssProperty('safe-area-inset-left', safeAreaInset.left + 'px');
+    setCssProperty('safe-area-inset-right', safeAreaInset.right + 'px');
+  }
+
+  var contentSafeAreaInset = {top: 0, bottom: 0, left: 0, right: 0};
+  function setContentSafeAreaInset(data) {
+    if (typeof data !== 'undefined') {
+      if (typeof data.top !== 'undefined') {
+        contentSafeAreaInset.top = data.top;
+      }
+      if (typeof data.bottom !== 'undefined') {
+        contentSafeAreaInset.bottom = data.bottom;
+      }
+      if (typeof data.left !== 'undefined') {
+        contentSafeAreaInset.left = data.left;
+      }
+      if (typeof data.right !== 'undefined') {
+        contentSafeAreaInset.right = data.right;
+      }
+      receiveWebViewEvent('contentSafeAreaChanged');
+    }
+    setCssProperty('content-safe-area-inset-top', contentSafeAreaInset.top + 'px');
+    setCssProperty('content-safe-area-inset-bottom', contentSafeAreaInset.bottom + 'px');
+    setCssProperty('content-safe-area-inset-left', contentSafeAreaInset.left + 'px');
+    setCssProperty('content-safe-area-inset-right', contentSafeAreaInset.right + 'px');
+  }
+
   var isClosingConfirmationEnabled = false;
   function setClosingConfirmation(need_confirmation) {
-    if (!versionAtLeast('1.0')) {
+    if (!versionAtLeast('6.2')) {
       console.warn('[MiniAppX.WebApp] Closing confirmation is not supported in version ' + webAppVersion);
       return;
     }
@@ -523,90 +607,206 @@
 
   var isVerticalSwipesEnabled = true;
   function toggleVerticalSwipes(enable_swipes) {
+    if (!versionAtLeast('7.7')) {
+      console.warn('[MiniAppX.WebApp] Changing swipes behavior is not supported in version ' + webAppVersion);
+      return;
+    }
     isVerticalSwipesEnabled = !!enable_swipes;
     WebView.postEvent('web_app_setup_swipe_behavior', false, {allow_vertical_swipe: isVerticalSwipesEnabled});
   }
 
-  var isActionBarVisible = true;
-  function toggleHeadContainer(visible) {
-    isActionBarVisible = !!visible;
-    WebView.postEvent('web_app_setup_show_head', false, {show_head: isActionBarVisible});
+    var isActionBarVisible = true;
+    function toggleHeadContainer(visible) {
+      isActionBarVisible = !!visible;
+      WebView.postEvent('web_app_setup_show_head', false, {show_head: isActionBarVisible});
+    }
+
+  function onFullscreenChanged(eventType, eventData) {
+    setFullscreen(eventData.is_fullscreen);
+    receiveWebViewEvent('fullscreenChanged');
+  }
+  function onFullscreenFailed(eventType, eventData) {
+    if (eventData.error == 'ALREADY_FULLSCREEN' && !webAppIsFullscreen) {
+      setFullscreen(true);
+    }
+    receiveWebViewEvent('fullscreenFailed', {
+      error: eventData.error
+    });
   }
 
-  var isFullScreenEnabled = false;
-  function toggleFullScreen(visible) {
-    isFullScreenEnabled = !!visible;
-    WebView.postEvent('web_app_setup_full_screen', false, {show_fullscreen: isFullScreenEnabled});
+  function toggleOrientationLock(locked) {
+    if (!versionAtLeast('8.0')) {
+      console.warn('[MiniAppX.WebApp] Orientation locking is not supported in version ' + webAppVersion);
+      return;
+    }
+    setOrientationLock(locked);
+    WebView.postEvent('web_app_toggle_orientation_lock', false, {locked: webAppIsOrientationLocked});
   }
 
-  var headerColorKey = 'bg_color', headerColor = null;
+  var homeScreenCallbacks = [];
+  function onHomeScreenAdded(eventType, eventData) {
+    receiveWebViewEvent('homeScreenAdded');
+  }
+  function onHomeScreenChecked(eventType, eventData) {
+    var status = eventData.status || 'unknown';
+    if (homeScreenCallbacks.length > 0) {
+      for (var i = 0; i < homeScreenCallbacks.length; i++) {
+        var callback = homeScreenCallbacks[i];
+        callback(status);
+      }
+      homeScreenCallbacks = [];
+    }
+    receiveWebViewEvent('homeScreenChecked', {
+      status: status
+    });
+  }
+
+  var WebAppShareMessageOpened = false;
+  function onPreparedMessageSent(eventType, eventData) {
+    if (WebAppShareMessageOpened) {
+      var requestData = WebAppShareMessageOpened;
+      WebAppShareMessageOpened = false;
+      if (requestData.callback) {
+        requestData.callback(true);
+      }
+      receiveWebViewEvent('shareMessageSent');
+    }
+  }
+  function onPreparedMessageFailed(eventType, eventData) {
+    if (WebAppShareMessageOpened) {
+      var requestData = WebAppShareMessageOpened;
+      WebAppShareMessageOpened = false;
+      if (requestData.callback) {
+        requestData.callback(false);
+      }
+      receiveWebViewEvent('shareMessageFailed', {
+        error: eventData.error
+      });
+    }
+  }
+
+  var WebAppEmojiStatusRequested = false;
+  function onEmojiStatusSet(eventType, eventData) {
+    if (WebAppEmojiStatusRequested) {
+      var requestData = WebAppEmojiStatusRequested;
+      WebAppEmojiStatusRequested = false;
+      if (requestData.callback) {
+        requestData.callback(true);
+      }
+      receiveWebViewEvent('emojiStatusSet');
+    }
+  }
+  function onEmojiStatusFailed(eventType, eventData) {
+    if (WebAppEmojiStatusRequested) {
+      var requestData = WebAppEmojiStatusRequested;
+      WebAppEmojiStatusRequested = false;
+      if (requestData.callback) {
+        requestData.callback(false);
+      }
+      receiveWebViewEvent('emojiStatusFailed', {
+        error: eventData.error
+      });
+    }
+  }
+  var WebAppEmojiStatusAccessRequested = false;
+  function onEmojiStatusAccessRequested(eventType, eventData) {
+    if (WebAppEmojiStatusAccessRequested) {
+      var requestData = WebAppEmojiStatusAccessRequested;
+      WebAppEmojiStatusAccessRequested = false;
+      if (requestData.callback) {
+        requestData.callback(eventData.status == 'allowed');
+      }
+      receiveWebViewEvent('emojiStatusAccessRequested', {
+        status: eventData.status
+      });
+    }
+  }
+
+  var webAppPopupOpened = false;
+  function onPopupClosed(eventType, eventData) {
+    if (webAppPopupOpened) {
+      var popupData = webAppPopupOpened;
+      webAppPopupOpened = false;
+      var button_id = null;
+      if (typeof eventData.button_id !== 'undefined') {
+        button_id = eventData.button_id;
+      }
+      if (popupData.callback) {
+        popupData.callback(button_id);
+      }
+      receiveWebViewEvent('popupClosed', {
+        button_id: button_id
+      });
+    }
+  }
+
+
   function getHeaderColor() {
-    if (headerColorKey == 'secondary_bg_color') {
+    if (webAppHeaderColorKey == 'secondary_bg_color') {
       return themeParams.secondary_bg_color;
-    } else if (headerColorKey == 'bg_color') {
+    } else if (webAppHeaderColorKey == 'bg_color') {
       return themeParams.bg_color;
     }
-    return headerColor;
+    return webAppHeaderColor;
   }
   function setHeaderColor(color) {
-    if (!versionAtLeast('1.0')) {
+    if (!versionAtLeast('6.1')) {
       console.warn('[MiniAppX.WebApp] Header color is not supported in version ' + webAppVersion);
       return;
     }
-    if (!versionAtLeast('1.0')) {
+    if (!versionAtLeast('6.9')) {
       if (themeParams.bg_color &&
           themeParams.bg_color == color) {
         color = 'bg_color';
       } else if (themeParams.secondary_bg_color &&
-          themeParams.secondary_bg_color == color) {
+                 themeParams.secondary_bg_color == color) {
         color = 'secondary_bg_color';
       }
     }
     var head_color = null, color_key = null;
     if (color == 'bg_color' || color == 'secondary_bg_color') {
       color_key = color;
-    } else if (versionAtLeast('1.0')) {
+    } else if (versionAtLeast('6.9')) {
       head_color = parseColorToHex(color);
       if (!head_color) {
         console.error('[MiniAppX.WebApp] Header color format is invalid', color);
         throw Error('WebAppHeaderColorInvalid');
       }
     }
-    if (!versionAtLeast('1.0') &&
+    if (!versionAtLeast('6.9') &&
         color_key != 'bg_color' &&
         color_key != 'secondary_bg_color') {
       console.error('[MiniAppX.WebApp] Header color key should be one of MiniAppX.WebApp.themeParams.bg_color, MiniAppX.WebApp.themeParams.secondary_bg_color, \'bg_color\', \'secondary_bg_color\'', color);
       throw Error('WebAppHeaderColorKeyInvalid');
     }
-    headerColorKey = color_key;
-    headerColor = head_color;
+    webAppHeaderColorKey = color_key;
+    webAppHeaderColor = head_color;
     updateHeaderColor();
   }
   var appHeaderColorKey = null, appHeaderColor = null;
   function updateHeaderColor() {
-    if (appHeaderColorKey != headerColorKey ||
-        appHeaderColor != headerColor) {
-      appHeaderColorKey = headerColorKey;
-      appHeaderColor = headerColor;
+    if (appHeaderColorKey != webAppHeaderColorKey ||
+        appHeaderColor != webAppHeaderColor) {
+      appHeaderColorKey = webAppHeaderColorKey;
+      appHeaderColor = webAppHeaderColor;
       if (appHeaderColor) {
-        WebView.postEvent('web_app_set_header_color', false, {color: headerColor});
+        WebView.postEvent('web_app_set_header_color', false, {color: webAppHeaderColor});
       } else {
-        WebView.postEvent('web_app_set_header_color', false, {color_key: headerColorKey});
+        WebView.postEvent('web_app_set_header_color', false, {color_key: webAppHeaderColorKey});
       }
     }
   }
 
-  var backgroundColor = 'bg_color';
   function getBackgroundColor() {
-    if (backgroundColor == 'secondary_bg_color') {
+    if (webAppBackgroundColor == 'secondary_bg_color') {
       return themeParams.secondary_bg_color;
-    } else if (backgroundColor == 'bg_color') {
+    } else if (webAppBackgroundColor == 'bg_color') {
       return themeParams.bg_color;
     }
-    return backgroundColor;
+    return webAppBackgroundColor;
   }
   function setBackgroundColor(color) {
-    if (!versionAtLeast('1.0')) {
+    if (!versionAtLeast('6.1')) {
       console.warn('[MiniAppX.WebApp] Background color is not supported in version ' + webAppVersion);
       return;
     }
@@ -620,7 +820,7 @@
         throw Error('WebAppBackgroundColorInvalid');
       }
     }
-    backgroundColor = bg_color;
+    webAppBackgroundColor = bg_color;
     updateBackgroundColor();
   }
   var appBackgroundColor = null;
@@ -629,6 +829,48 @@
     if (appBackgroundColor != color) {
       appBackgroundColor = color;
       WebView.postEvent('web_app_set_background_color', false, {color: color});
+    }
+  }
+
+  var bottomBarColor = 'bottom_bar_bg_color';
+  function getBottomBarColor() {
+    if (bottomBarColor == 'bottom_bar_bg_color') {
+      return themeParams.bottom_bar_bg_color || themeParams.secondary_bg_color || '#ffffff';
+    } else if (bottomBarColor == 'secondary_bg_color') {
+      return themeParams.secondary_bg_color;
+    } else if (bottomBarColor == 'bg_color') {
+      return themeParams.bg_color;
+    }
+    return bottomBarColor;
+  }
+  function setBottomBarColor(color) {
+    if (!versionAtLeast('7.10')) {
+      console.warn('[MiniAppX.WebApp] Bottom bar color is not supported in version ' + webAppVersion);
+      return;
+    }
+    var bg_color;
+    if (color == 'bg_color' || color == 'secondary_bg_color' || color == 'bottom_bar_bg_color') {
+      bg_color = color;
+    } else {
+      bg_color = parseColorToHex(color);
+      if (!bg_color) {
+        console.error('[MiniAppX.WebApp] Bottom bar color format is invalid', color);
+        throw Error('WebAppBottomBarColorInvalid');
+      }
+    }
+    bottomBarColor = bg_color;
+    updateBottomBarColor();
+    window.MiniAppX.WebApp.SecondaryButton.setParams({});
+  }
+  var appBottomBarColor = null;
+  function updateBottomBarColor() {
+    var color = getBottomBarColor();
+    if (appBottomBarColor != color) {
+      appBottomBarColor = color;
+      WebView.postEvent('web_app_set_bottom_bar_color', false, {color: color});
+    }
+    if (initParams.tgWebAppDebug) {
+      updateDebugBottomBar();
     }
   }
 
@@ -728,7 +970,7 @@
     }
 
     function buttonCheckVersion() {
-      if (!versionAtLeast('1.0')) {
+      if (!versionAtLeast('6.1')) {
         console.warn('[MiniAppX.WebApp] BackButton is not supported in version ' + webAppVersion);
         return false;
       }
@@ -777,97 +1019,197 @@
     return backButton;
   })();
 
-  var mainButtonHeight = 0;
-  var MainButton = (function() {
+  var debugBottomBar = null, debugBottomBarBtns = {}, bottomBarHeight = 0;
+  if (initParams.tgWebAppDebug) {
+    debugBottomBar = document.createElement('tg-bottom-bar');
+    var debugBottomBarStyle = {
+      display: 'flex',
+      gap: '7px',
+      font: '600 14px/18px sans-serif',
+      width: '100%',
+      background: getBottomBarColor(),
+      position: 'fixed',
+      left: '0',
+      right: '0',
+      bottom: '0',
+      margin: '0',
+      padding: '7px',
+      textAlign: 'center',
+      boxSizing: 'border-box',
+      zIndex: '10000'
+    };
+    for (var k in debugBottomBarStyle) {
+      debugBottomBar.style[k] = debugBottomBarStyle[k];
+    }
+    document.addEventListener('DOMContentLoaded', function onDomLoaded(event) {
+      document.removeEventListener('DOMContentLoaded', onDomLoaded);
+      document.body.appendChild(debugBottomBar);
+    });
+    var animStyle = document.createElement('style');
+    animStyle.innerHTML = 'tg-bottom-button.shine { position: relative; overflow: hidden; } tg-bottom-button.shine:before { content:""; position: absolute; top: 0; width: 100%; height: 100%; background: linear-gradient(120deg, transparent, rgba(255, 255, 255, .2), transparent); animation: tg-bottom-button-shine 5s ease-in-out infinite; } @-webkit-keyframes tg-bottom-button-shine { 0% {left: -100%;} 12%,100% {left: 100%}} @keyframes tg-bottom-button-shine { 0% {left: -100%;} 12%,100% {left: 100%}}';
+    debugBottomBar.appendChild(animStyle);
+  }
+  function updateDebugBottomBar() {
+    var mainBtn = debugBottomBarBtns.main._bottomButton;
+    var secondaryBtn = debugBottomBarBtns.secondary._bottomButton;
+    if (mainBtn.isVisible || secondaryBtn.isVisible) {
+      debugBottomBar.style.display = 'flex';
+      bottomBarHeight = 58;
+      if (mainBtn.isVisible && secondaryBtn.isVisible) {
+        if (secondaryBtn.position == 'top') {
+          debugBottomBar.style.flexDirection = 'column-reverse';
+          bottomBarHeight += 51;
+        } else if (secondaryBtn.position == 'bottom') {
+          debugBottomBar.style.flexDirection = 'column';
+          bottomBarHeight += 51;
+        } else if (secondaryBtn.position == 'left') {
+          debugBottomBar.style.flexDirection = 'row-reverse';
+        } else if (secondaryBtn.position == 'right') {
+          debugBottomBar.style.flexDirection = 'row';
+        }
+      }
+    } else {
+      debugBottomBar.style.display = 'none';
+      bottomBarHeight = 0;
+    }
+    debugBottomBar.style.background = getBottomBarColor();
+    if (document.documentElement) {
+      document.documentElement.style.boxSizing = 'border-box';
+      document.documentElement.style.paddingBottom = bottomBarHeight + 'px';
+    }
+    setViewportHeight();
+  }
+
+
+  var BottomButtonConstructor = function(type) {
+    var isMainButton = (type == 'main');
+    if (isMainButton) {
+      var setupFnName = 'web_app_setup_main_button';
+      var tgEventName = 'main_button_pressed';
+      var webViewEventName = 'mainButtonClicked';
+      var buttonTextDefault = 'Continue';
+      var buttonColorDefault = function(){ return themeParams.button_color || '#2481cc'; };
+      var buttonTextColorDefault = function(){ return themeParams.button_text_color || '#ffffff'; };
+    } else {
+      var setupFnName = 'web_app_setup_secondary_button';
+      var tgEventName = 'secondary_button_pressed';
+      var webViewEventName = 'secondaryButtonClicked';
+      var buttonTextDefault = 'Cancel';
+      var buttonColorDefault = function(){ return getBottomBarColor(); };
+      var buttonTextColorDefault = function(){ return themeParams.button_color || '#2481cc'; };
+    }
+
     var isVisible = false;
     var isActive = true;
+    var hasShineEffect = false;
     var isProgressVisible = false;
-    var buttonText = 'CONTINUE';
+    var buttonType = type;
+    var buttonText = buttonTextDefault;
     var buttonColor = false;
     var buttonTextColor = false;
+    var buttonPosition = 'left';
 
-    var mainButton = {};
-    Object.defineProperty(mainButton, 'text', {
-      set: function(val){ mainButton.setParams({text: val}); },
+    var bottomButton = {};
+    Object.defineProperty(bottomButton, 'type', {
+      get: function(){ return buttonType; },
+      enumerable: true
+    });
+    Object.defineProperty(bottomButton, 'text', {
+      set: function(val){ bottomButton.setParams({text: val}); },
       get: function(){ return buttonText; },
       enumerable: true
     });
-    Object.defineProperty(mainButton, 'color', {
-      set: function(val){ mainButton.setParams({color: val}); },
-      get: function(){ return buttonColor || themeParams.button_color || '#2481cc'; },
+    Object.defineProperty(bottomButton, 'color', {
+      set: function(val){ bottomButton.setParams({color: val}); },
+      get: function(){ return buttonColor || buttonColorDefault(); },
       enumerable: true
     });
-    Object.defineProperty(mainButton, 'textColor', {
-      set: function(val){ mainButton.setParams({text_color: val}); },
-      get: function(){ return buttonTextColor || themeParams.button_text_color || '#ffffff'; },
+    Object.defineProperty(bottomButton, 'textColor', {
+      set: function(val){ bottomButton.setParams({text_color: val}); },
+      get: function(){ return buttonTextColor || buttonTextColorDefault(); },
       enumerable: true
     });
-    Object.defineProperty(mainButton, 'isVisible', {
-      set: function(val){ mainButton.setParams({is_visible: val}); },
+    Object.defineProperty(bottomButton, 'isVisible', {
+      set: function(val){ bottomButton.setParams({is_visible: val}); },
       get: function(){ return isVisible; },
       enumerable: true
     });
-    Object.defineProperty(mainButton, 'isProgressVisible', {
+    Object.defineProperty(bottomButton, 'isProgressVisible', {
       get: function(){ return isProgressVisible; },
       enumerable: true
     });
-    Object.defineProperty(mainButton, 'isActive', {
-      set: function(val){ mainButton.setParams({is_active: val}); },
+    Object.defineProperty(bottomButton, 'isActive', {
+      set: function(val){ bottomButton.setParams({is_active: val}); },
       get: function(){ return isActive; },
       enumerable: true
     });
+    Object.defineProperty(bottomButton, 'hasShineEffect', {
+      set: function(val){ bottomButton.setParams({has_shine_effect: val}); },
+      get: function(){ return hasShineEffect; },
+      enumerable: true
+    });
+    if (!isMainButton) {
+      Object.defineProperty(bottomButton, 'position', {
+        set: function(val){ bottomButton.setParams({position: val}); },
+        get: function(){ return buttonPosition; },
+        enumerable: true
+      });
+    }
 
     var curButtonState = null;
 
-    WebView.onEvent('main_button_pressed', onMainButtonPressed);
+    WebView.onEvent(tgEventName, onBottomButtonPressed);
 
-    var debugBtn = null, debugBtnStyle = {};
+    var debugBtn = null;
     if (initParams.tgWebAppDebug) {
-      debugBtn = document.createElement('tg-main-button');
-      debugBtnStyle = {
-        font: '600 14px/18px sans-serif',
+      debugBtn = document.createElement('tg-bottom-button');
+      var debugBtnStyle = {
         display: 'none',
         width: '100%',
-        height: '48px',
+        height: '44px',
         borderRadius: '0',
         background: 'no-repeat right center',
-        position: 'fixed',
-        left: '0',
-        right: '0',
-        bottom: '0',
-        margin: '0',
-        padding: '15px 20px',
+        padding: '13px 15px',
         textAlign: 'center',
-        boxSizing: 'border-box',
-        zIndex: '10000'
+        boxSizing: 'border-box'
       };
       for (var k in debugBtnStyle) {
         debugBtn.style[k] = debugBtnStyle[k];
       }
-      document.addEventListener('DOMContentLoaded', function onDomLoaded(event) {
-        document.removeEventListener('DOMContentLoaded', onDomLoaded);
-        document.body.appendChild(debugBtn);
-        debugBtn.addEventListener('click', onMainButtonPressed, false);
-      });
+      debugBottomBar.appendChild(debugBtn);
+      debugBtn.addEventListener('click', onBottomButtonPressed, false);
+      debugBtn._bottomButton = bottomButton;
+      debugBottomBarBtns[type] = debugBtn;
     }
 
-    function onMainButtonPressed() {
+    function onBottomButtonPressed() {
       if (isActive) {
-        receiveWebViewEvent('mainButtonClicked');
+        receiveWebViewEvent(webViewEventName);
       }
     }
 
     function buttonParams() {
-      var color = mainButton.color;
-      var text_color = mainButton.textColor;
-      return isVisible ? {
-        is_visible: true,
-        is_active: isActive,
-        is_progress_visible: isProgressVisible,
-        text: buttonText,
-        color: color,
-        text_color: text_color
-      } : {is_visible: false};
+      var color = bottomButton.color;
+      var text_color = bottomButton.textColor;
+      if (isVisible) {
+        var params = {
+          is_visible: true,
+          is_active: isActive,
+          is_progress_visible: isProgressVisible,
+          text: buttonText,
+          color: color,
+          text_color: text_color,
+          has_shine_effect: hasShineEffect && isActive && !isProgressVisible
+        };
+        if (!isMainButton) {
+          params.position = buttonPosition;
+        }
+      } else {
+        var params = {
+          is_visible: false
+        };
+      }
+      return params;
     }
 
     function buttonState(btn_params) {
@@ -884,7 +1226,7 @@
         return;
       }
       curButtonState = btn_state;
-      WebView.postEvent('web_app_setup_main_button', false, btn_params);
+      WebView.postEvent(setupFnName, false, btn_params);
       if (initParams.tgWebAppDebug) {
         updateDebugButton(btn_params);
       }
@@ -893,36 +1235,31 @@
     function updateDebugButton(btn_params) {
       if (btn_params.is_visible) {
         debugBtn.style.display = 'block';
-        mainButtonHeight = 48;
 
         debugBtn.style.opacity = btn_params.is_active ? '1' : '0.8';
         debugBtn.style.cursor = btn_params.is_active ? 'pointer' : 'auto';
         debugBtn.disabled = !btn_params.is_active;
         debugBtn.innerText = btn_params.text;
-        debugBtn.style.backgroundImage = btn_params.is_progress_visible ? "url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20viewport%3D%220%200%2048%2048%22%20width%3D%2248px%22%20height%3D%2248px%22%3E%3Ccircle%20cx%3D%2250%25%22%20cy%3D%2250%25%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.25%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20stroke-dashoffset%3D%22106%22%20r%3D%229%22%20stroke-dasharray%3D%2256.52%22%20rotate%3D%22-90%22%3E%3Canimate%20attributeName%3D%22stroke-dashoffset%22%20attributeType%3D%22XML%22%20dur%3D%22360s%22%20from%3D%220%22%20to%3D%2212500%22%20repeatCount%3D%22indefinite%22%3E%3C%2Fanimate%3E%3CanimateTransform%20attributeName%3D%22transform%22%20attributeType%3D%22XML%22%20type%3D%22rotate%22%20dur%3D%221s%22%20from%3D%22-90%2024%2024%22%20to%3D%22630%2024%2024%22%20repeatCount%3D%22indefinite%22%3E%3C%2FanimateTransform%3E%3C%2Fcircle%3E%3C%2Fsvg%3E')" : 'none';
+        debugBtn.className = btn_params.has_shine_effect ? 'shine' : '';
+        debugBtn.style.backgroundImage = btn_params.is_progress_visible ? "url('data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewport="0 0 48 48" width="48px" height="48px"><circle cx="50%" cy="50%" stroke="' + btn_params.text_color + '" stroke-width="2.25" stroke-linecap="round" fill="none" stroke-dashoffset="106" r="9" stroke-dasharray="56.52" rotate="-90"><animate attributeName="stroke-dashoffset" attributeType="XML" dur="360s" from="0" to="12500" repeatCount="indefinite"></animate><animateTransform attributeName="transform" attributeType="XML" type="rotate" dur="1s" from="-90 24 24" to="630 24 24" repeatCount="indefinite"></animateTransform></circle></svg>') + "')" : 'none';
         debugBtn.style.backgroundColor = btn_params.color;
         debugBtn.style.color = btn_params.text_color;
       } else {
         debugBtn.style.display = 'none';
-        mainButtonHeight = 0;
       }
-      if (document.documentElement) {
-        document.documentElement.style.boxSizing = 'border-box';
-        document.documentElement.style.paddingBottom = mainButtonHeight + 'px';
-      }
-      setViewportHeight();
+      updateDebugBottomBar();
     }
 
     function setParams(params) {
       if (typeof params.text !== 'undefined') {
         var text = strTrim(params.text);
         if (!text.length) {
-          console.error('[MiniAppX.WebApp] Main button text is required', params.text);
-          throw Error('WebAppMainButtonParamInvalid');
+          console.error('[MiniAppX.WebApp] Bottom button text is required', params.text);
+          throw Error('WebAppBottomButtonParamInvalid');
         }
         if (text.length > 64) {
-          console.error('[MiniAppX.WebApp] Main button text is too long', text);
-          throw Error('WebAppMainButtonParamInvalid');
+          console.error('[MiniAppX.WebApp] Bottom button text is too long', text);
+          throw Error('WebAppBottomButtonParamInvalid');
         }
         buttonText = text;
       }
@@ -933,8 +1270,8 @@
         } else {
           var color = parseColorToHex(params.color);
           if (!color) {
-            console.error('[MiniAppX.WebApp] Main button color format is invalid', params.color);
-            throw Error('WebAppMainButtonParamInvalid');
+            console.error('[MiniAppX.WebApp] Bottom button color format is invalid', params.color);
+            throw Error('WebAppBottomButtonParamInvalid');
           }
           buttonColor = color;
         }
@@ -946,67 +1283,80 @@
         } else {
           var text_color = parseColorToHex(params.text_color);
           if (!text_color) {
-            console.error('[MiniAppX.WebApp] Main button text color format is invalid', params.text_color);
-            throw Error('WebAppMainButtonParamInvalid');
+            console.error('[MiniAppX.WebApp] Bottom button text color format is invalid', params.text_color);
+            throw Error('WebAppBottomButtonParamInvalid');
           }
           buttonTextColor = text_color;
         }
       }
       if (typeof params.is_visible !== 'undefined') {
         if (params.is_visible &&
-            !mainButton.text.length) {
-          console.error('[MiniAppX.WebApp] Main button text is required');
-          throw Error('WebAppMainButtonParamInvalid');
+            !bottomButton.text.length) {
+          console.error('[MiniAppX.WebApp] Bottom button text is required');
+          throw Error('WebAppBottomButtonParamInvalid');
         }
         isVisible = !!params.is_visible;
+      }
+      if (typeof params.has_shine_effect !== 'undefined') {
+        hasShineEffect = !!params.has_shine_effect;
+      }
+      if (!isMainButton && typeof params.position !== 'undefined') {
+        if (params.position != 'left' && params.position != 'right' &&
+            params.position != 'top' && params.position != 'bottom') {
+          console.error('[MiniAppX.WebApp] Bottom button posiition is invalid', params.position);
+          throw Error('WebAppBottomButtonParamInvalid');
+        }
+        buttonPosition = params.position;
       }
       if (typeof params.is_active !== 'undefined') {
         isActive = !!params.is_active;
       }
       updateButton();
-      return mainButton;
+      return bottomButton;
     }
 
-    mainButton.setText = function(text) {
-      return mainButton.setParams({text: text});
+    bottomButton.setText = function(text) {
+      return bottomButton.setParams({text: text});
     };
-    mainButton.onClick = function(callback) {
-      onWebViewEvent('mainButtonClicked', callback);
-      return mainButton;
+    bottomButton.onClick = function(callback) {
+      onWebViewEvent(webViewEventName, callback);
+      return bottomButton;
     };
-    mainButton.offClick = function(callback) {
-      offWebViewEvent('mainButtonClicked', callback);
-      return mainButton;
+    bottomButton.offClick = function(callback) {
+      offWebViewEvent(webViewEventName, callback);
+      return bottomButton;
     };
-    mainButton.show = function() {
-      return mainButton.setParams({is_visible: true});
+    bottomButton.show = function() {
+      return bottomButton.setParams({is_visible: true});
     };
-    mainButton.hide = function() {
-      return mainButton.setParams({is_visible: false});
+    bottomButton.hide = function() {
+      return bottomButton.setParams({is_visible: false});
     };
-    mainButton.enable = function() {
-      return mainButton.setParams({is_active: true});
+    bottomButton.enable = function() {
+      return bottomButton.setParams({is_active: true});
     };
-    mainButton.disable = function() {
-      return mainButton.setParams({is_active: false});
+    bottomButton.disable = function() {
+      return bottomButton.setParams({is_active: false});
     };
-    mainButton.showProgress = function(leaveActive) {
+    bottomButton.showProgress = function(leaveActive) {
       isActive = !!leaveActive;
       isProgressVisible = true;
       updateButton();
-      return mainButton;
+      return bottomButton;
     };
-    mainButton.hideProgress = function() {
-      if (!mainButton.isActive) {
+    bottomButton.hideProgress = function() {
+      if (!bottomButton.isActive) {
         isActive = true;
       }
       isProgressVisible = false;
       updateButton();
-      return mainButton;
+      return bottomButton;
     }
-    mainButton.setParams = setParams;
-    return mainButton;
-  })();
+    bottomButton.setParams = setParams;
+    return bottomButton;
+  };
+  var MainButton = BottomButtonConstructor('main');
+  var SecondaryButton = BottomButtonConstructor('secondary');
 
   var SettingsButton = (function() {
     var isVisible = false;
@@ -1038,7 +1388,7 @@
     }
 
     function buttonCheckVersion() {
-      if (!versionAtLeast('1.0')) {
+      if (!versionAtLeast('6.10')) {
         console.warn('[MiniAppX.WebApp] SettingsButton is not supported in version ' + webAppVersion);
         return false;
       }
@@ -1091,7 +1441,7 @@
     var hapticFeedback = {};
 
     function triggerFeedback(params) {
-      if (!versionAtLeast('1.0')) {
+      if (!versionAtLeast('6.1')) {
         console.warn('[MiniAppX.WebApp] HapticFeedback is not supported in version ' + webAppVersion);
         return hapticFeedback;
       }
@@ -1137,7 +1487,7 @@
     var cloudStorage = {};
 
     function invokeStorageMethod(method, params, callback) {
-      if (!versionAtLeast('1.0')) {
+      if (!versionAtLeast('6.9')) {
         console.error('[MiniAppX.WebApp] CloudStorage is not supported in version ' + webAppVersion);
         throw Error('WebAppMethodUnsupported');
       }
@@ -1245,6 +1595,7 @@
           var callback = initRequestState.callbacks[i];
           callback();
         }
+        initRequestState.callbacks = [];
       }
       if (accessRequestState) {
         var state = accessRequestState;
@@ -1298,7 +1649,7 @@
     }
 
     function checkVersion() {
-      if (!versionAtLeast('1.0')) {
+      if (!versionAtLeast('7.2')) {
         console.warn('[MiniAppX.WebApp] BiometricManager is not supported in version ' + webAppVersion);
         return false;
       }
@@ -1443,6 +1794,525 @@
     return biometricManager;
   })();
 
+  var LocationManager = (function() {
+    var isInited = false;
+    var isLocationAvailable = false;
+    var isAccessRequested = false;
+    var isAccessGranted = false;
+
+    var locationManager = {};
+    Object.defineProperty(locationManager, 'isInited', {
+      get: function(){ return isInited; },
+      enumerable: true
+    });
+    Object.defineProperty(locationManager, 'isLocationAvailable', {
+      get: function(){ return isInited && isLocationAvailable; },
+      enumerable: true
+    });
+    Object.defineProperty(locationManager, 'isAccessRequested', {
+      get: function(){ return isAccessRequested; },
+      enumerable: true
+    });
+    Object.defineProperty(locationManager, 'isAccessGranted', {
+      get: function(){ return isAccessRequested && isAccessGranted; },
+      enumerable: true
+    });
+
+    var initRequestState = {callbacks: []};
+    var getRequestState = {callbacks: []};
+
+    WebView.onEvent('location_checked',  onLocationChecked);
+    WebView.onEvent('location_requested', onLocationRequested);
+
+    function onLocationChecked(eventType, eventData) {
+      isInited = true;
+      if (eventData.available) {
+        isLocationAvailable = true;
+        if (eventData.access_requested) {
+          isAccessRequested = true;
+          isAccessGranted = !!eventData.access_granted;
+        } else {
+          isAccessRequested = false;
+          isAccessGranted = false;
+        }
+      } else {
+        isLocationAvailable = false;
+        isAccessRequested = false;
+        isAccessGranted = false;
+      }
+
+      if (initRequestState.callbacks.length > 0) {
+        for (var i = 0; i < initRequestState.callbacks.length; i++) {
+          var callback = initRequestState.callbacks[i];
+          callback();
+        }
+        initRequestState.callbacks = [];
+      }
+      receiveWebViewEvent('locationManagerUpdated');
+    }
+    function onLocationRequested(eventType, eventData) {
+      if (!eventData.available) {
+        locationData = null;
+      } else {
+        var locationData = {
+          latitude: eventData.latitude,
+          longitude: eventData.longitude,
+          altitude: null,
+          course: null,
+          speed: null,
+          horizontal_accuracy: null,
+          vertical_accuracy: null,
+          course_accuracy: null,
+          speed_accuracy: null,
+        };
+        if (typeof eventData.altitude !== 'undefined' && eventData.altitude !== null) {
+          locationData.altitude = eventData.altitude;
+        }
+        if (typeof eventData.course !== 'undefined' && eventData.course !== null) {
+          locationData.course = eventData.course % 360;
+        }
+        if (typeof eventData.speed !== 'undefined' && eventData.speed !== null) {
+          locationData.speed = eventData.speed;
+        }
+        if (typeof eventData.horizontal_accuracy !== 'undefined' && eventData.horizontal_accuracy !== null) {
+          locationData.horizontal_accuracy = eventData.horizontal_accuracy;
+        }
+        if (typeof eventData.vertical_accuracy !== 'undefined' && eventData.vertical_accuracy !== null) {
+          locationData.vertical_accuracy = eventData.vertical_accuracy;
+        }
+        if (typeof eventData.course_accuracy !== 'undefined' && eventData.course_accuracy !== null) {
+          locationData.course_accuracy = eventData.course_accuracy;
+        }
+        if (typeof eventData.speed_accuracy !== 'undefined' && eventData.speed_accuracy !== null) {
+          locationData.speed_accuracy = eventData.speed_accuracy;
+        }
+      }
+      if (!eventData.available ||
+          !isLocationAvailable ||
+          !isAccessRequested ||
+          !isAccessGranted) {
+        initRequestState.callbacks.push(function() {
+          locationResponse(locationData);
+        });
+        WebView.postEvent('web_app_check_location', false);
+      } else {
+        locationResponse(locationData);
+      }
+    }
+    function locationResponse(response) {
+      if (getRequestState.callbacks.length > 0) {
+        for (var i = 0; i < getRequestState.callbacks.length; i++) {
+          var callback = getRequestState.callbacks[i];
+          callback(response);
+        }
+        getRequestState.callbacks = [];
+      }
+      if (response !== null) {
+        receiveWebViewEvent('locationRequested', {
+          locationData: response
+        });
+      }
+    }
+
+    function checkVersion() {
+      if (!versionAtLeast('8.0')) {
+        console.warn('[MiniAppX.WebApp] LocationManager is not supported in version ' + webAppVersion);
+        return false;
+      }
+      return true;
+    }
+
+    function checkInit() {
+      if (!isInited) {
+        console.error('[MiniAppX.WebApp] LocationManager should be inited before using.');
+        throw Error('WebAppLocationManagerNotInited');
+      }
+      return true;
+    }
+
+    locationManager.init = function(callback) {
+      if (!checkVersion()) {
+        return locationManager;
+      }
+      if (isInited) {
+        return locationManager;
+      }
+      if (callback) {
+        initRequestState.callbacks.push(callback);
+      }
+      WebView.postEvent('web_app_check_location', false);
+      return locationManager;
+    };
+    locationManager.getLocation = function(callback) {
+      if (!checkVersion()) {
+        return locationManager;
+      }
+      checkInit();
+      if (!isLocationAvailable) {
+        console.error('[MiniAppX.WebApp] Location is not available on this device.');
+        throw Error('WebAppLocationManagerLocationNotAvailable');
+      }
+
+      getRequestState.callbacks.push(callback);
+      WebView.postEvent('web_app_request_location');
+      return locationManager;
+    };
+    locationManager.openSettings = function() {
+      if (!checkVersion()) {
+        return locationManager;
+      }
+      checkInit();
+      if (!isLocationAvailable) {
+        console.error('[MiniAppX.WebApp] Location is not available on this device.');
+        throw Error('WebAppLocationManagerLocationNotAvailable');
+      }
+      if (!isAccessRequested) {
+        console.error('[MiniAppX.WebApp] Location access was not requested yet.');
+        throw Error('WebAppLocationManagerLocationAccessNotRequested');
+      }
+      if (isAccessGranted) {
+        console.warn('[MiniAppX.WebApp] Location access was granted by the user, no need to go to settings.');
+        return locationManager;
+      }
+      WebView.postEvent('web_app_open_location_settings', false);
+      return locationManager;
+    };
+    return locationManager;
+  })();
+
+  var Accelerometer = (function() {
+    var isStarted = false;
+    var valueX = null, valueY = null, valueZ = null;
+    var startCallbacks = [], stopCallbacks = [];
+
+    var accelerometer = {};
+    Object.defineProperty(accelerometer, 'isStarted', {
+      get: function(){ return isStarted; },
+      enumerable: true
+    });
+    Object.defineProperty(accelerometer, 'x', {
+      get: function(){ return valueX; },
+      enumerable: true
+    });
+    Object.defineProperty(accelerometer, 'y', {
+      get: function(){ return valueY; },
+      enumerable: true
+    });
+    Object.defineProperty(accelerometer, 'z', {
+      get: function(){ return valueZ; },
+      enumerable: true
+    });
+
+    WebView.onEvent('accelerometer_started', onAccelerometerStarted);
+    WebView.onEvent('accelerometer_stopped', onAccelerometerStopped);
+    WebView.onEvent('accelerometer_changed', onAccelerometerChanged);
+    WebView.onEvent('accelerometer_failed',  onAccelerometerFailed);
+
+    function onAccelerometerStarted(eventType, eventData) {
+      isStarted = true;
+      if (startCallbacks.length > 0) {
+        for (var i = 0; i < startCallbacks.length; i++) {
+          var callback = startCallbacks[i];
+          callback(true);
+        }
+        startCallbacks = [];
+      }
+      receiveWebViewEvent('accelerometerStarted');
+    }
+    function onAccelerometerStopped(eventType, eventData) {
+      isStarted = false;
+      if (stopCallbacks.length > 0) {
+        for (var i = 0; i < stopCallbacks.length; i++) {
+          var callback = stopCallbacks[i];
+          callback(true);
+        }
+        stopCallbacks = [];
+      }
+      receiveWebViewEvent('accelerometerStopped');
+    }
+    function onAccelerometerChanged(eventType, eventData) {
+      valueX = eventData.x;
+      valueY = eventData.y;
+      valueZ = eventData.z;
+      receiveWebViewEvent('accelerometerChanged');
+    }
+    function onAccelerometerFailed(eventType, eventData) {
+      if (startCallbacks.length > 0) {
+        for (var i = 0; i < startCallbacks.length; i++) {
+          var callback = startCallbacks[i];
+          callback(false);
+        }
+        startCallbacks = [];
+      }
+      receiveWebViewEvent('accelerometerFailed', {
+        error: eventData.error
+      });
+    }
+
+    function checkVersion() {
+      if (!versionAtLeast('8.0')) {
+        console.warn('[MiniAppX.WebApp] Accelerometer is not supported in version ' + webAppVersion);
+        return false;
+      }
+      return true;
+    }
+
+    accelerometer.start = function(params, callback) {
+      params = params || {};
+      if (!checkVersion()) {
+        return accelerometer;
+      }
+      var req_params = {};
+      var refresh_rate = parseInt(params.refresh_rate || 1000);
+      if (isNaN(refresh_rate) || refresh_rate < 20 || refresh_rate > 1000) {
+        console.warn('[MiniAppX.WebApp] Accelerometer refresh_rate is invalid', refresh_rate);
+      } else {
+        req_params.refresh_rate = refresh_rate;
+      }
+
+      if (callback) {
+        startCallbacks.push(callback);
+      }
+      WebView.postEvent('web_app_start_accelerometer', false, req_params);
+      return accelerometer;
+    };
+    accelerometer.stop = function(callback) {
+      if (!checkVersion()) {
+        return accelerometer;
+      }
+      if (callback) {
+        stopCallbacks.push(callback);
+      }
+      WebView.postEvent('web_app_stop_accelerometer');
+      return accelerometer;
+    };
+    return accelerometer;
+  })();
+
+  var DeviceOrientation = (function() {
+    var isStarted = false;
+    var valueAlpha = null, valueBeta = null, valueGamma = null, valueAbsolute = false;
+    var startCallbacks = [], stopCallbacks = [];
+
+    var deviceOrientation = {};
+    Object.defineProperty(deviceOrientation, 'isStarted', {
+      get: function(){ return isStarted; },
+      enumerable: true
+    });
+    Object.defineProperty(deviceOrientation, 'absolute', {
+      get: function(){ return valueAbsolute; },
+      enumerable: true
+    });
+    Object.defineProperty(deviceOrientation, 'alpha', {
+      get: function(){ return valueAlpha; },
+      enumerable: true
+    });
+    Object.defineProperty(deviceOrientation, 'beta', {
+      get: function(){ return valueBeta; },
+      enumerable: true
+    });
+    Object.defineProperty(deviceOrientation, 'gamma', {
+      get: function(){ return valueGamma; },
+      enumerable: true
+    });
+
+    WebView.onEvent('device_orientation_started',  onDeviceOrientationStarted);
+    WebView.onEvent('device_orientation_stopped',  onDeviceOrientationStopped);
+    WebView.onEvent('device_orientation_changed', onDeviceOrientationChanged);
+    WebView.onEvent('device_orientation_failed',  onDeviceOrientationFailed);
+
+    function onDeviceOrientationStarted(eventType, eventData) {
+      isStarted = true;
+      if (startCallbacks.length > 0) {
+        for (var i = 0; i < startCallbacks.length; i++) {
+          var callback = startCallbacks[i];
+          callback(true);
+        }
+        startCallbacks = [];
+      }
+      receiveWebViewEvent('deviceOrientationStarted');
+    }
+    function onDeviceOrientationStopped(eventType, eventData) {
+      isStarted = false;
+      if (stopCallbacks.length > 0) {
+        for (var i = 0; i < stopCallbacks.length; i++) {
+          var callback = stopCallbacks[i];
+          callback(true);
+        }
+        stopCallbacks = [];
+      }
+      receiveWebViewEvent('deviceOrientationStopped');
+    }
+    function onDeviceOrientationChanged(eventType, eventData) {
+      valueAbsolute = !!eventData.absolute;
+      valueAlpha = eventData.alpha;
+      valueBeta  = eventData.beta;
+      valueGamma = eventData.gamma;
+      receiveWebViewEvent('deviceOrientationChanged');
+    }
+    function onDeviceOrientationFailed(eventType, eventData) {
+      if (startCallbacks.length > 0) {
+        for (var i = 0; i < startCallbacks.length; i++) {
+          var callback = startCallbacks[i];
+          callback(false);
+        }
+        startCallbacks = [];
+      }
+      receiveWebViewEvent('deviceOrientationFailed', {
+        error: eventData.error
+      });
+    }
+
+    function checkVersion() {
+      if (!versionAtLeast('8.0')) {
+        console.warn('[MiniAppX.WebApp] DeviceOrientation is not supported in version ' + webAppVersion);
+        return false;
+      }
+      return true;
+    }
+
+    deviceOrientation.start = function(params, callback) {
+      params = params || {};
+      if (!checkVersion()) {
+        return deviceOrientation;
+      }
+      var req_params = {};
+      var refresh_rate = parseInt(params.refresh_rate || 1000);
+      if (isNaN(refresh_rate) || refresh_rate < 20 || refresh_rate > 1000) {
+        console.warn('[MiniAppX.WebApp] DeviceOrientation refresh_rate is invalid', refresh_rate);
+      } else {
+        req_params.refresh_rate = refresh_rate;
+      }
+      req_params.need_absolute = !!params.need_absolute;
+
+      if (callback) {
+        startCallbacks.push(callback);
+      }
+      WebView.postEvent('web_app_start_device_orientation', false, req_params);
+      return deviceOrientation;
+    };
+    deviceOrientation.stop = function(callback) {
+      if (!checkVersion()) {
+        return deviceOrientation;
+      }
+      if (callback) {
+        stopCallbacks.push(callback);
+      }
+      WebView.postEvent('web_app_stop_device_orientation');
+      return deviceOrientation;
+    };
+    return deviceOrientation;
+  })();
+
+  var Gyroscope = (function() {
+    var isStarted = false;
+    var valueX = null, valueY = null, valueZ = null;
+    var startCallbacks = [], stopCallbacks = [];
+
+    var gyroscope = {};
+    Object.defineProperty(gyroscope, 'isStarted', {
+      get: function(){ return isStarted; },
+      enumerable: true
+    });
+    Object.defineProperty(gyroscope, 'x', {
+      get: function(){ return valueX; },
+      enumerable: true
+    });
+    Object.defineProperty(gyroscope, 'y', {
+      get: function(){ return valueY; },
+      enumerable: true
+    });
+    Object.defineProperty(gyroscope, 'z', {
+      get: function(){ return valueZ; },
+      enumerable: true
+    });
+
+    WebView.onEvent('gyroscope_started',  onGyroscopeStarted);
+    WebView.onEvent('gyroscope_stopped',  onGyroscopeStopped);
+    WebView.onEvent('gyroscope_changed', onGyroscopeChanged);
+    WebView.onEvent('gyroscope_failed',  onGyroscopeFailed);
+
+    function onGyroscopeStarted(eventType, eventData) {
+      isStarted = true;
+      if (startCallbacks.length > 0) {
+        for (var i = 0; i < startCallbacks.length; i++) {
+          var callback = startCallbacks[i];
+          callback(true);
+        }
+        startCallbacks = [];
+      }
+      receiveWebViewEvent('gyroscopeStarted');
+    }
+    function onGyroscopeStopped(eventType, eventData) {
+      isStarted = false;
+      if (stopCallbacks.length > 0) {
+        for (var i = 0; i < stopCallbacks.length; i++) {
+          var callback = stopCallbacks[i];
+          callback(true);
+        }
+        stopCallbacks = [];
+      }
+      receiveWebViewEvent('gyroscopeStopped');
+    }
+    function onGyroscopeChanged(eventType, eventData) {
+      valueX = eventData.x;
+      valueY = eventData.y;
+      valueZ = eventData.z;
+      receiveWebViewEvent('gyroscopeChanged');
+    }
+    function onGyroscopeFailed(eventType, eventData) {
+      if (startCallbacks.length > 0) {
+        for (var i = 0; i < startCallbacks.length; i++) {
+          var callback = startCallbacks[i];
+          callback(false);
+        }
+        startCallbacks = [];
+      }
+      receiveWebViewEvent('gyroscopeFailed', {
+        error: eventData.error
+      });
+    }
+
+    function checkVersion() {
+      if (!versionAtLeast('8.0')) {
+        console.warn('[MiniAppX.WebApp] Gyroscope is not supported in version ' + webAppVersion);
+        return false;
+      }
+      return true;
+    }
+
+    gyroscope.start = function(params, callback) {
+      params = params || {};
+      if (!checkVersion()) {
+        return gyroscope;
+      }
+      var req_params = {};
+      var refresh_rate = parseInt(params.refresh_rate || 1000);
+      if (isNaN(refresh_rate) || refresh_rate < 20 || refresh_rate > 1000) {
+        console.warn('[MiniAppX.WebApp] Gyroscope refresh_rate is invalid', refresh_rate);
+      } else {
+        req_params.refresh_rate = refresh_rate;
+      }
+
+      if (callback) {
+        startCallbacks.push(callback);
+      }
+      WebView.postEvent('web_app_start_gyroscope', false, req_params);
+      return gyroscope;
+    };
+    gyroscope.stop = function(callback) {
+      if (!checkVersion()) {
+        return gyroscope;
+      }
+      if (callback) {
+        stopCallbacks.push(callback);
+      }
+      WebView.postEvent('web_app_stop_gyroscope');
+      return gyroscope;
+    };
+    return gyroscope;
+  })();
+
   var webAppInvoices = {};
   function onInvoiceClosed(eventType, eventData) {
     if (eventData.slug && webAppInvoices[eventData.slug]) {
@@ -1497,6 +2367,7 @@
   }
   function onScanQrPopupClosed(eventType, eventData) {
     webAppScanQrPopupOpened = false;
+    receiveWebViewEvent('scanQrPopupClosed');
   }
 
   function onClipboardTextReceived(eventType, eventData) {
@@ -1589,8 +2460,22 @@
     }
   }
 
+  var webAppDownloadFileRequested = false;
+  function onFileDownloadRequested(eventType, eventData) {
+    if (webAppDownloadFileRequested) {
+      var requestData = webAppDownloadFileRequested;
+      webAppDownloadFileRequested = false;
+      var isDownloading = eventData.status == 'downloading';
+      if (requestData.callback) {
+        requestData.callback(isDownloading);
+      }
+      receiveWebViewEvent('fileDownloadRequested', {
+        status: isDownloading ? 'downloading' : 'cancelled'
+      });
+    }
+  }
+
   function onCustomMethodInvoked(eventType, eventData) {
-    console.log("==============[MiniAppX.WebApp] => onCustomMethodInvoked", eventType, eventData )
     if (eventData.req_id && webAppCallbacks[eventData.req_id]) {
       var requestData = webAppCallbacks[eventData.req_id];
       delete webAppCallbacks[eventData.req_id];
@@ -1608,7 +2493,7 @@
   }
 
   function invokeCustomMethod(method, params, callback) {
-    if (!versionAtLeast('1.0')) {
+    if (!versionAtLeast('6.9')) {
       console.error('[MiniAppX.WebApp] Method invokeCustomMethod is not supported in version ' + webAppVersion);
       throw Error('WebAppMethodUnsupported');
     }
@@ -1620,12 +2505,10 @@
     WebView.postEvent('web_app_invoke_custom_method', false, req_params);
   };
 
-  // 21. Register MiniAppX object
   if (!window.MiniAppX) {
     window.MiniAppX = {};
   }
 
-  // 22. WebApp defines properties and methods, communicate by calling WebView to send messages
   Object.defineProperty(WebApp, 'initData', {
     get: function(){ return webAppInitData; },
     enumerable: true
@@ -1655,16 +2538,42 @@
     enumerable: true
   });
   Object.defineProperty(WebApp, 'viewportHeight', {
-    get: function(){ return (viewportHeight === false ? window.innerHeight : viewportHeight) - mainButtonHeight; },
+    get: function(){ return (viewportHeight === false ? window.innerHeight : viewportHeight) - bottomBarHeight; },
     enumerable: true
   });
   Object.defineProperty(WebApp, 'viewportStableHeight', {
-    get: function(){ return (viewportStableHeight === false ? window.innerHeight : viewportStableHeight) - mainButtonHeight; },
+    get: function(){ return (viewportStableHeight === false ? window.innerHeight : viewportStableHeight) - bottomBarHeight; },
+    enumerable: true
+  });
+  Object.defineProperty(WebApp, 'safeAreaInset', {
+    get: function(){ return safeAreaInset; },
+    enumerable: true
+  });
+  Object.defineProperty(WebApp, 'contentSafeAreaInset', {
+    get: function(){ return contentSafeAreaInset; },
     enumerable: true
   });
   Object.defineProperty(WebApp, 'isClosingConfirmationEnabled', {
     set: function(val){ setClosingConfirmation(val); },
     get: function(){ return isClosingConfirmationEnabled; },
+    enumerable: true
+  });
+  Object.defineProperty(WebApp, 'isVerticalSwipesEnabled', {
+    set: function(val){ toggleVerticalSwipes(val); },
+    get: function(){ return isVerticalSwipesEnabled; },
+    enumerable: true
+  });
+  Object.defineProperty(WebApp, 'isFullscreen', {
+    get: function(){ return webAppIsFullscreen; },
+    enumerable: true
+  });
+  Object.defineProperty(WebApp, 'isOrientationLocked', {
+    set: function(val){ toggleOrientationLock(val); },
+    get: function(){ return webAppIsOrientationLocked; },
+    enumerable: true
+  });
+  Object.defineProperty(WebApp, 'isActive', {
+    get: function(){ return webAppIsActive; },
     enumerable: true
   });
   Object.defineProperty(WebApp, 'headerColor', {
@@ -1677,12 +2586,21 @@
     get: function(){ return getBackgroundColor(); },
     enumerable: true
   });
+  Object.defineProperty(WebApp, 'bottomBarColor', {
+    set: function(val){ setBottomBarColor(val); },
+    get: function(){ return getBottomBarColor(); },
+    enumerable: true
+  });
   Object.defineProperty(WebApp, 'BackButton', {
     value: BackButton,
     enumerable: true
   });
   Object.defineProperty(WebApp, 'MainButton', {
     value: MainButton,
+    enumerable: true
+  });
+  Object.defineProperty(WebApp, 'SecondaryButton', {
+    value: SecondaryButton,
     enumerable: true
   });
   Object.defineProperty(WebApp, 'SettingsButton', {
@@ -1701,29 +2619,41 @@
     value: BiometricManager,
     enumerable: true
   });
-  Object.defineProperty(WebApp, 'isVerticalSwipesEnabled', {
-    set: function(val){ toggleVerticalSwipes(val); },
-    get: function(){ return isVerticalSwipesEnabled; },
-    enumerable: true
-  });
   Object.defineProperty(WebApp, 'isActionBarVisible', {
-    set: function(val){ toggleHeadContainer(val); },
-    get: function(){ return isActionBarVisible; },
-    enumerable: true
-  });
-  Object.defineProperty(WebApp, 'isFullScreenEnabled', {
-    set: function(val){ toggleFullScreen(val); },
-    get: function(){ return isFullScreenEnabled; },
-    enumerable: true
+     set: function(val){ toggleHeadContainer(val); },
+     get: function(){ return isActionBarVisible; },
+     enumerable: true
   });
   WebApp.sayHello = function () {
-    WebView.sayHello()
+     WebView.sayHello()
+  };
+  Object.defineProperty(WebApp, 'Accelerometer', {
+    value: Accelerometer,
+    enumerable: true
+  });
+  Object.defineProperty(WebApp, 'DeviceOrientation', {
+    value: DeviceOrientation,
+    enumerable: true
+  });
+  Object.defineProperty(WebApp, 'Gyroscope', {
+    value: Gyroscope,
+    enumerable: true
+  });
+  Object.defineProperty(WebApp, 'LocationManager', {
+    value: LocationManager,
+    enumerable: true
+  });
+  WebApp.isVersionAtLeast = function(ver) {
+    return versionAtLeast(ver);
   };
   WebApp.setHeaderColor = function(color_key) {
     WebApp.headerColor = color_key;
   };
   WebApp.setBackgroundColor = function(color) {
     WebApp.backgroundColor = color;
+  };
+  WebApp.setBottomBarColor = function(color) {
+    WebApp.bottomBarColor = color;
   };
   WebApp.enableClosingConfirmation = function() {
     WebApp.isClosingConfirmationEnabled = true;
@@ -1743,14 +2673,42 @@
   WebApp.disableActionBar = function() {
     WebApp.isActionBarVisible = false;
   };
-  WebApp.enableFullScreen = function() {
-    WebApp.isFullScreenEnabled = true;
+  WebApp.lockOrientation = function() {
+    WebApp.isOrientationLocked = true;
   };
-  WebApp.disableFullScreen = function() {
-    WebApp.isFullScreenEnabled = false;
+  WebApp.unlockOrientation = function() {
+    WebApp.isOrientationLocked = false;
   };
-  WebApp.isVersionAtLeast = function(ver) {
-    return versionAtLeast(ver);
+  WebApp.requestFullscreen = function() {
+    if (!versionAtLeast('8.0')) {
+      console.error('[MiniAppX.WebApp] Method requestFullscreen is not supported in version ' + webAppVersion);
+      throw Error('WebAppMethodUnsupported');
+    }
+    WebView.postEvent('web_app_request_fullscreen');
+  };
+  WebApp.exitFullscreen = function() {
+    if (!versionAtLeast('8.0')) {
+      console.error('[MiniAppX.WebApp] Method exitFullscreen is not supported in version ' + webAppVersion);
+      throw Error('WebAppMethodUnsupported');
+    }
+    WebView.postEvent('web_app_exit_fullscreen');
+  };
+  WebApp.addToHomeScreen = function() {
+    if (!versionAtLeast('8.0')) {
+      console.error('[MiniAppX.WebApp] Method addToHomeScreen is not supported in version ' + webAppVersion);
+      throw Error('WebAppMethodUnsupported');
+    }
+    WebView.postEvent('web_app_add_to_home_screen');
+  };
+  WebApp.checkHomeScreenStatus = function(callback) {
+    if (!versionAtLeast('8.0')) {
+      console.error('[MiniAppX.WebApp] Method checkHomeScreenStatus is not supported in version ' + webAppVersion);
+      throw Error('WebAppMethodUnsupported');
+    }
+    if (callback) {
+      homeScreenCallbacks.push(callback);
+    }
+    WebView.postEvent('web_app_check_home_screen');
   };
   WebApp.onEvent = function(eventType, callback) {
     onWebViewEvent(eventType, callback);
@@ -1769,12 +2727,12 @@
     WebView.postEvent('web_app_data_send', false, {data: data});
   };
   WebApp.switchInlineQuery = function (query, choose_chat_types) {
-    if (!versionAtLeast('1.0')) {
+    if (!versionAtLeast('6.6')) {
       console.error('[MiniAppX.WebApp] Method switchInlineQuery is not supported in version ' + webAppVersion);
       throw Error('WebAppMethodUnsupported');
     }
     if (!initParams.tgWebAppBotInline) {
-      console.error('[MiniAppX.WebApp] Inline mode is disabled for this bot. Read more about inline mode: https://core.MiniAppX.org/bots/inline');
+      console.error('[MiniAppX.WebApp] Inline mode is disabled for this bot. Read more about inline mode: https://core.telegram.org/bots/inline');
       throw Error('WebAppInlineModeDisabled');
     }
     query = query || '';
@@ -1813,29 +2771,41 @@
     }
     var url = a.href;
     options = options || {};
-    if (versionAtLeast('1.0')) {
-      WebView.postEvent('web_app_open_link', false, {url: url, try_instant_view: versionAtLeast('1.0') && !!options.try_instant_view});
+    if (versionAtLeast('6.1')) {
+      var req_params = {url: url};
+      if (versionAtLeast('6.4') && options.try_instant_view) {
+        req_params.try_instant_view = true;
+      }
+      if (versionAtLeast('7.6') && options.try_browser) {
+        req_params.try_browser = options.try_browser;
+      }
+      WebView.postEvent('web_app_open_link', false, req_params);
     } else {
       window.open(url, '_blank');
     }
   };
-  WebApp.openWebAppLink = function (url) {
+  WebApp.openMiniAppXLink = function (url, options) {
     var a = document.createElement('A');
     a.href = url;
     if (a.protocol != 'http:' &&
         a.protocol != 'https:') {
       console.error('[MiniAppX.WebApp] Url protocol is not supported', url);
-      throw Error('WebAppUrlInvalid');
+      throw Error('WebAppTgUrlInvalid');
     }
-    if (a.hostname != 'MiniAppX.io') {
+    if (a.hostname != 't.me') {
       console.error('[MiniAppX.WebApp] Url host is not supported', url);
       throw Error('WebAppTgUrlInvalid');
     }
     var path_full = a.pathname + a.search;
-    if (isIframe || versionAtLeast('1.0')) {
-      WebView.postEvent('web_app_open_webapp_link', false, {path_full: path_full});
+    options = options || {};
+    if (isIframe || versionAtLeast('6.1')) {
+      var req_params = {path_full: path_full};
+      if (options.force_request) {
+        req_params.force_request = true;
+      }
+      WebView.postEvent('web_app_open_tg_link', false, req_params);
     } else {
-      location.href = 'https://MiniAppX.io' + path_full;
+      location.href = 'https://t.me' + path_full;
     }
   };
   WebApp.openInvoice = function (url, callback) {
@@ -1843,13 +2813,13 @@
     a.href = url;
     if (a.protocol != 'http:' &&
         a.protocol != 'https:' ||
-        a.hostname != 'MiniAppX.io' ||
+        a.hostname != 't.me' ||
         !(match = a.pathname.match(/^\/(\$|invoice\/)([A-Za-z0-9\-_=]+)$/)) ||
         !(slug = match[2])) {
       console.error('[MiniAppX.WebApp] Invoice url is invalid', url);
       throw Error('WebAppInvoiceUrlInvalid');
     }
-    if (!versionAtLeast('1.0')) {
+    if (!versionAtLeast('6.1')) {
       console.error('[MiniAppX.WebApp] Method openInvoice is not supported in version ' + webAppVersion);
       throw Error('WebAppMethodUnsupported');
     }
@@ -1864,7 +2834,7 @@
     WebView.postEvent('web_app_open_invoice', false, {slug: slug});
   };
   WebApp.showPopup = function (params, callback) {
-    if (!versionAtLeast('1.0')) {
+    if (!versionAtLeast('6.2')) {
       console.error('[MiniAppX.WebApp] Method showPopup is not supported in version ' + webAppVersion);
       throw Error('WebAppMethodUnsupported');
     }
@@ -1926,7 +2896,7 @@
             button_type == 'cancel') {
           // no params needed
         } else if (button_type == 'default' ||
-            button_type == 'destructive') {
+                   button_type == 'destructive') {
           var text = '';
           if (typeof button.text !== 'undefined') {
             text = strTrim(button.text);
@@ -1981,7 +2951,7 @@
     } : null);
   };
   WebApp.showScanQrPopup = function (params, callback) {
-    if (!versionAtLeast('1.0')) {
+    if (!versionAtLeast('6.4')) {
       console.error('[MiniAppX.WebApp] Method showScanQrPopup is not supported in version ' + webAppVersion);
       throw Error('WebAppMethodUnsupported');
     }
@@ -2008,7 +2978,7 @@
     WebView.postEvent('web_app_open_scan_qr_popup', false, popup_params);
   };
   WebApp.closeScanQrPopup = function () {
-    if (!versionAtLeast('1.0')) {
+    if (!versionAtLeast('6.4')) {
       console.error('[MiniAppX.WebApp] Method closeScanQrPopup is not supported in version ' + webAppVersion);
       throw Error('WebAppMethodUnsupported');
     }
@@ -2017,7 +2987,7 @@
     WebView.postEvent('web_app_close_scan_qr_popup', false);
   };
   WebApp.readTextFromClipboard = function (callback) {
-    if (!versionAtLeast('1.0')) {
+    if (!versionAtLeast('6.4')) {
       console.error('[MiniAppX.WebApp] Method readTextFromClipboard is not supported in version ' + webAppVersion);
       throw Error('WebAppMethodUnsupported');
     }
@@ -2029,7 +2999,7 @@
     WebView.postEvent('web_app_read_text_from_clipboard', false, req_params);
   };
   WebApp.requestWriteAccess = function (callback) {
-    if (!versionAtLeast('1.0')) {
+    if (!versionAtLeast('6.9')) {
       console.error('[MiniAppX.WebApp] Method requestWriteAccess is not supported in version ' + webAppVersion);
       throw Error('WebAppMethodUnsupported');
     }
@@ -2043,7 +3013,7 @@
     WebView.postEvent('web_app_request_write_access');
   };
   WebApp.requestContact = function (callback) {
-    if (!versionAtLeast('1.0')) {
+    if (!versionAtLeast('6.9')) {
       console.error('[MiniAppX.WebApp] Method requestContact is not supported in version ' + webAppVersion);
       throw Error('WebAppMethodUnsupported');
     }
@@ -2056,6 +3026,139 @@
     };
     WebView.postEvent('web_app_request_phone');
   };
+  WebApp.downloadFile = function (params, callback) {
+    if (!versionAtLeast('8.0')) {
+      console.error('[MiniAppX.WebApp] Method downloadFile is not supported in version ' + webAppVersion);
+      throw Error('WebAppMethodUnsupported');
+    }
+    if (webAppDownloadFileRequested) {
+      console.error('[MiniAppX.WebApp] Popup is already opened');
+      throw Error('WebAppDownloadFilePopupOpened');
+    }
+    var a = document.createElement('A');
+
+    var dl_params = {};
+    if (!params || !params.url || !params.url.length) {
+      console.error('[MiniAppX.WebApp] Url is required');
+      throw Error('WebAppDownloadFileParamInvalid');
+    }
+    a.href = params.url;
+    if (a.protocol != 'https:') {
+      console.error('[MiniAppX.WebApp] Url protocol is not supported', url);
+      throw Error('WebAppDownloadFileParamInvalid');
+    }
+    dl_params.url = a.href;
+
+    if (!params || !params.file_name || !params.file_name.length) {
+      console.error('[MiniAppX.WebApp] File name is required');
+      throw Error('WebAppDownloadFileParamInvalid');
+    }
+    dl_params.file_name = params.file_name;
+
+    webAppDownloadFileRequested = {
+      callback: callback
+    };
+    WebView.postEvent('web_app_request_file_download', false, dl_params);
+  };
+  WebApp.shareToStory = function (media_url, params) {
+    params = params || {};
+    if (!versionAtLeast('7.8')) {
+      console.error('[MiniAppX.WebApp] Method shareToStory is not supported in version ' + webAppVersion);
+      throw Error('WebAppMethodUnsupported');
+    }
+    var a = document.createElement('A');
+    a.href = media_url;
+    if (a.protocol != 'http:' &&
+        a.protocol != 'https:') {
+      console.error('[MiniAppX.WebApp] Media url protocol is not supported', url);
+      throw Error('WebAppMediaUrlInvalid');
+    }
+    var share_params = {};
+    share_params.media_url = a.href;
+    if (typeof params.text !== 'undefined') {
+      var text = strTrim(params.text);
+      if (text.length > 2048) {
+        console.error('[MiniAppX.WebApp] Text is too long', text);
+        throw Error('WebAppShareToStoryParamInvalid');
+      }
+      if (text.length > 0) {
+        share_params.text = text;
+      }
+    }
+    if (typeof params.widget_link !== 'undefined') {
+      params.widget_link = params.widget_link || {};
+      a.href = params.widget_link.url;
+      if (a.protocol != 'http:' &&
+          a.protocol != 'https:') {
+        console.error('[MiniAppX.WebApp] Link protocol is not supported', url);
+        throw Error('WebAppShareToStoryParamInvalid');
+      }
+      var widget_link = {
+        url: a.href
+      };
+      if (typeof params.widget_link.name !== 'undefined') {
+        var link_name = strTrim(params.widget_link.name);
+        if (link_name.length > 48) {
+          console.error('[MiniAppX.WebApp] Link name is too long', link_name);
+          throw Error('WebAppShareToStoryParamInvalid');
+        }
+        if (link_name.length > 0) {
+          widget_link.name = link_name;
+        }
+      }
+      share_params.widget_link = widget_link;
+    }
+
+    WebView.postEvent('web_app_share_to_story', false, share_params);
+  };
+  WebApp.shareMessage = function (msg_id, callback) {
+    if (!versionAtLeast('8.0')) {
+      console.error('[MiniAppX.WebApp] Method shareMessage is not supported in version ' + webAppVersion);
+      throw Error('WebAppMethodUnsupported');
+    }
+    if (WebAppShareMessageOpened) {
+      console.error('[MiniAppX.WebApp] Share message is already opened');
+      throw Error('WebAppShareMessageOpened');
+    }
+    WebAppShareMessageOpened = {
+      callback: callback
+    };
+    WebView.postEvent('web_app_send_prepared_message', false, {id: msg_id});
+  };
+  WebApp.setEmojiStatus = function (custom_emoji_id, params, callback) {
+    params = params || {};
+    if (!versionAtLeast('8.0')) {
+      console.error('[MiniAppX.WebApp] Method setEmojiStatus is not supported in version ' + webAppVersion);
+      throw Error('WebAppMethodUnsupported');
+    }
+    var status_params = {};
+    status_params.custom_emoji_id = custom_emoji_id;
+    if (typeof params.duration !== 'undefined') {
+      status_params.duration = params.duration;
+    }
+    if (WebAppEmojiStatusRequested) {
+      console.error('[MiniAppX.WebApp] Emoji status is already requested');
+      throw Error('WebAppEmojiStatusRequested');
+    }
+    WebAppEmojiStatusRequested = {
+      callback: callback
+    };
+    WebView.postEvent('web_app_set_emoji_status', false, status_params);
+  };
+  WebApp.requestEmojiStatusAccess = function (callback) {
+    if (!versionAtLeast('8.0')) {
+      console.error('[MiniAppX.WebApp] Method requestEmojiStatusAccess is not supported in version ' + webAppVersion);
+      throw Error('WebAppMethodUnsupported');
+    }
+    if (WebAppEmojiStatusAccessRequested) {
+      console.error('[MiniAppX.WebApp] Emoji status permission is already requested');
+      throw Error('WebAppEmojiStatusAccessRequested');
+    }
+    WebAppEmojiStatusAccessRequested = {
+      callback: callback
+    };
+    WebView.postEvent('web_app_request_emoji_status_access');
+  };
   WebApp.invokeCustomMethod = function (method, params, callback) {
     invokeCustomMethod(method, params, callback);
   };
@@ -2065,15 +3168,20 @@
   WebApp.expand = function () {
     WebView.postEvent('web_app_expand');
   };
-  WebApp.close = function () {
-    WebView.postEvent('web_app_close');
+  WebApp.close = function (options) {
+    options = options || {};
+    var req_params = {};
+    if (versionAtLeast('7.6') && options.return_back) {
+      req_params.return_back = true;
+    }
+    WebView.postEvent('web_app_close', false, req_params);
   };
 
-  // 23. Register MiniAppX.WebApp object, i.e., WebApp object, object provided for H5 use, complete JS to Native communication
   window.MiniAppX.WebApp = WebApp;
 
   updateHeaderColor();
   updateBackgroundColor();
+  updateBottomBarColor();
   setViewportHeight();
   if (initParams.tgWebAppShowSettings) {
     SettingsButton.show();
@@ -2084,9 +3192,11 @@
     document.addEventListener('click', linkHandler);
   }
 
-  // 24. Listen to WebView message events, complete Native message to JS listening
   WebView.onEvent('theme_changed', onThemeChanged);
   WebView.onEvent('viewport_changed', onViewportChanged);
+  WebView.onEvent('safe_area_changed', onSafeAreaChanged);
+  WebView.onEvent('content_safe_area_changed', onContentSafeAreaChanged);
+  WebView.onEvent('visibility_changed', onVisibilityChanged);
   WebView.onEvent('invoice_closed', onInvoiceClosed);
   WebView.onEvent('popup_closed', onPopupClosed);
   WebView.onEvent('qr_text_received', onQrTextReceived);
@@ -2094,10 +3204,20 @@
   WebView.onEvent('clipboard_text_received', onClipboardTextReceived);
   WebView.onEvent('write_access_requested', onWriteAccessRequested);
   WebView.onEvent('phone_requested', onPhoneRequested);
+  WebView.onEvent('file_download_requested', onFileDownloadRequested);
   WebView.onEvent('custom_method_invoked', onCustomMethodInvoked);
+  WebView.onEvent('fullscreen_changed', onFullscreenChanged);
+  WebView.onEvent('fullscreen_failed', onFullscreenFailed);
+  WebView.onEvent('home_screen_added', onHomeScreenAdded);
+  WebView.onEvent('home_screen_checked', onHomeScreenChecked);
+  WebView.onEvent('prepared_message_sent', onPreparedMessageSent);
+  WebView.onEvent('prepared_message_failed', onPreparedMessageFailed);
+  WebView.onEvent('emoji_status_set', onEmojiStatusSet);
+  WebView.onEvent('emoji_status_failed', onEmojiStatusFailed);
+  WebView.onEvent('emoji_status_access_requested', onEmojiStatusAccessRequested);
   WebView.postEvent('web_app_request_theme');
   WebView.postEvent('web_app_request_viewport');
-
-  console.log("==============[MiniAppX.WebApp] init Finish!")
+  WebView.postEvent('web_app_request_safe_area');
+  WebView.postEvent('web_app_request_content_safe_area');
 
 })();

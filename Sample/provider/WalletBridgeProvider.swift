@@ -10,6 +10,8 @@ import MiniAppX
 
 class WalletBridgeProvider : BridgeProvider {
     
+    private let deepLinkHost = "miniappx.io"
+    
     static let shared = WalletBridgeProvider()
 
     static func getInstance() -> WalletBridgeProvider {
@@ -18,9 +20,8 @@ class WalletBridgeProvider : BridgeProvider {
 
     public var providerMap: [String: Provider] = [:]
 
-    public func handleDeepLink(url: URL) { 
-        // https://t.dejoy.io/dapp_data/{rpcRequestId}/{method}
-        if url.host == "t.dejoy.io" {
+    public func handleDeepLink(url: URL) {
+        if url.host == deepLinkHost {
             if url.pathComponents.count >= 3 {
                 let rpcRequestId = url.pathComponents[2]
                 let provider = providerMap[rpcRequestId]
@@ -57,6 +58,7 @@ class WalletBridgeProvider : BridgeProvider {
     func inject(webView: WKWebView) {
         TrustWeb3Provider().inject(webView: webView)
         PhantomProvider().inject(webView: webView)
+        SampleProvider().inject(webView: webView)
     }
 }
 

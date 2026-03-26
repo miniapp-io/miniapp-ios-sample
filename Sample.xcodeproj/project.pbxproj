@@ -22,7 +22,9 @@
 		F96490522C6D9919006B6EF7 /* ActionBarContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96490512C6D9919006B6EF7 /* ActionBarContainer.swift */; };
 		F96490582C7734F5006B6EF7 /* OCViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F96490542C7734F5006B6EF7 /* OCViewController.m */; };
 		F96490592C7734F5006B6EF7 /* MiniSDKManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96490562C7734F5006B6EF7 /* MiniSDKManager.swift */; };
+		F9654FAA2F7537A100DF1A72 /* SampleProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9654FA92F7537A100DF1A72 /* SampleProvider.swift */; };
 		F96786E12E5338C7008DB7AC /* WalletBridgeProvider.bundle in Resources */ = {isa = PBXBuildFile; fileRef = F96786E02E5338C7008DB7AC /* WalletBridgeProvider.bundle */; };
+		F97806602F28BB4B0083FB6A /* ToasManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F978065F2F28BB450083FB6A /* ToasManager.swift */; };
 		F97F9BCF2C4A510B003833F2 /* mini.html in Resources */ = {isa = PBXBuildFile; fileRef = F97F9BCC2C4A510B003833F2 /* mini.html */; };
 		F97F9BD02C4A510B003833F2 /* miniapp-web-app.js in Resources */ = {isa = PBXBuildFile; fileRef = F97F9BCD2C4A510B003833F2 /* miniapp-web-app.js */; };
 		F97F9BD12C4A510B003833F2 /* wallet.html in Resources */ = {isa = PBXBuildFile; fileRef = F97F9BCE2C4A510B003833F2 /* wallet.html */; };
@@ -56,7 +58,9 @@
 		F96490542C7734F5006B6EF7 /* OCViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OCViewController.m; sourceTree = "<group>"; };
 		F96490562C7734F5006B6EF7 /* MiniSDKManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MiniSDKManager.swift; sourceTree = "<group>"; };
 		F96490572C7734F5006B6EF7 /* OCViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OCViewController.h; sourceTree = "<group>"; };
+		F9654FA92F7537A100DF1A72 /* SampleProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleProvider.swift; sourceTree = "<group>"; };
 		F96786E02E5338C7008DB7AC /* WalletBridgeProvider.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = WalletBridgeProvider.bundle; sourceTree = "<group>"; };
+		F978065F2F28BB450083FB6A /* ToasManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToasManager.swift; sourceTree = "<group>"; };
 		F97F9BCC2C4A510B003833F2 /* mini.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = mini.html; sourceTree = "<group>"; };
 		F97F9BCD2C4A510B003833F2 /* miniapp-web-app.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "miniapp-web-app.js"; sourceTree = "<group>"; };
 		F97F9BCE2C4A510B003833F2 /* wallet.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = wallet.html; sourceTree = "<group>"; };
@@ -120,6 +124,7 @@
 		CE76CDA428F1B820001342AD /* Sample */ = {
 			isa = PBXGroup;
 			children = (
+				F978065F2F28BB450083FB6A /* ToasManager.swift */,
 				F96786E02E5338C7008DB7AC /* WalletBridgeProvider.bundle */,
 				F959FAEC2E532FC3004587D4 /* provider */,
 				F964905A2C773500006B6EF7 /* OC */,
@@ -147,6 +152,7 @@
 			children = (
 				F9EB3A452CF78EAD00BECA8F /* TrustWeb3Provider.swift */,
 				F959FAE82E532F95004587D4 /* PhantomProvider.swift */,
+				F9654FA92F7537A100DF1A72 /* SampleProvider.swift */,
 				F959FAED2E533017004587D4 /* WalletBridgeProvider.swift */,
 			);
 			path = provider;
@@ -258,9 +264,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Sample/Pods-Sample-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Sample/Pods-Sample-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -299,8 +309,10 @@
 				F9EB3A482CF78EDA00BECA8F /* ProviderNetwork.swift in Sources */,
 				F912CC692CF797F900500844 /* DAppMethod.swift in Sources */,
 				F9EB3A462CF78EAE00BECA8F /* TrustWeb3Provider.swift in Sources */,
+				F97806602F28BB4B0083FB6A /* ToasManager.swift in Sources */,
 				CE76CDAA28F1B820001342AD /* ViewController.swift in Sources */,
 				F959FAEE2E533017004587D4 /* WalletBridgeProvider.swift in Sources */,
+				F9654FAA2F7537A100DF1A72 /* SampleProvider.swift in Sources */,
 				F9EB3A4A2CF78EF000BECA8F /* WKWebView+Extension.swift in Sources */,
 				CE76CDA628F1B820001342AD /* AppDelegate.swift in Sources */,
 				F96490582C7734F5006B6EF7 /* OCViewController.m in Sources */,

@@ -68,8 +68,7 @@ class ViewController: UIViewController {
                 .parentVC(self)
                 .botName("mini")
                 .miniAppName("mini")
-                .autoExpand(false)
-                .useCache(false)
+                .params(["viewStyle":"modal"])
                 .isLocalSource(true)
                 .build()
             
@@ -110,9 +109,7 @@ class ViewController: UIViewController {
             
             let config = try WebAppLaunchWithDialogParameters.Builder()
                 .parentVC(self)
-//                .url("https://game.bt.qiku.net/games/fruittri?code=LuLT2PdXscbH3TOmTpX+LVnPClMHSZFa66v7ygw40CExOCQXfkUaBZzEeM+hoOtW&channel=telegram&lan=zh-hans")
                 .miniAppId("10")
-                .useCache(false)
                 .params(["spaceId":"11111", "appId":"10"])
                 .startParams(components.query)
                 .build()
@@ -130,7 +127,7 @@ class ViewController: UIViewController {
             
             let config = try WebAppLaunchWithDialogParameters.Builder()
                 .parentVC(self)
-                .url("https://miniappx.io/apps/2lv8dp7JjF2AU0iEk2rMYUaySjU?roomId=2222")
+                .url("https://miniappx.io/apps/35MnI7J2cI2DGEAdTY28bZ7dn8Z")
                 .build()
             
             MiniSDKManager.shared.miniAppService.launch(config: config)

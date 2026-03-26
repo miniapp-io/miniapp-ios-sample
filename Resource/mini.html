@@ -1,462 +1,487 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta property="og:title" content="Your Page Title" />
-  <meta property="og:description" content="A brief description of your page." />
-  <meta property="og:url" content="https://www.example.com/page.html" />
-  <meta property="og:image" content="https://www.example.com/image.jpg" />
-  <meta property="og:params" content="Share Data" />
-  <title>Demo</title>
-  <script src="miniapp-web-app.js"></script>
-  <script>
-    window.MiniAppX.WebApp.setHeaderColor("#B0E0E6")
-    window.MiniAppX.WebApp.setBackgroundColor("#B0E0E6")
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta property="og:title" content="Your Page Title" />
+    <meta property="og:description" content="A brief description of your page." />
+    <meta property="og:url" content="https://www.example.com/page.html" />
+    <meta property="og:image" content="https://www.example.com/image.jpg" />
+    <meta property="og:params" content="Share Data" />
+    <title>Demo</title>
+    <script src="miniapp-web-app.js"></script>
+    <script>
+        window.MiniAppX.WebApp.setHeaderColor("#B0E0E6")
+        window.MiniAppX.WebApp.setBackgroundColor("#B0E0E6")
 
-    function closeMiniApp(){
-      window.MiniAppX.WebApp.close()
-    }
-
-    function copyToClipboard(){
-      navigator.clipboard.writeText('Text to be copied')
-      .then(() => {
-        console.log('Text copied to clipboard');
-      })
-      .catch(err => {
-        // This can happen if the user denies clipboard permissions:
-        console.error('Could not copy text: ', err);
-      });
-    }
-
-    function expandMiniApp(){
-      window.MiniAppX.WebApp.expand()
-    }
-
-    function disableExpand() {
-      window.MiniAppX.WebApp.isVerticalSwipesEnabled = !window.MiniAppX.WebApp.isVerticalSwipesEnabled
-      document.getElementById("expand").textContent = window.MiniAppX.WebApp.isVerticalSwipesEnabled ? "Disable Vertical Swipes" : "Enable Vertical Swipes"
-    }
-
-    function notify(text) {
-      let infoElement = document.querySelector(".info");
-
-      let timestamp = new Date().toLocaleTimeString();
-      let message = timestamp + ": " + text;
-
-      let logListElement = document.querySelector("#logList");
-      let listItem = document.createElement("li");
-      listItem.textContent = message;
-
-      logListElement.insertBefore(listItem, logListElement.firstChild);
-
-      console.log(message)
-    }
-
-    function sayHello(){
-      window.MiniAppX.WebApp.sayHello();
-      notify("MiniAppX MiniApp=> Hello, MiniAppX App!");
-    }
-
-    function contentSafeAreaInset() {
-      let result = window.MiniAppX.WebApp.contentSafeAreaInset;
-      notify("top: " + result.top + " left: " + result.left + " bottom: " + result.bottom + " right: " + result.right);
-      
-      // 创建或更新蓝色矩形显示安全区域
-      let safeAreaRect = document.getElementById('safeAreaRect');
-      if (!safeAreaRect) {
-        safeAreaRect = document.createElement('div');
-        safeAreaRect.id = 'safeAreaRect';
-        document.body.appendChild(safeAreaRect);
-      }
-      
-      // 设置矩形的位置和大小
-      safeAreaRect.style.position = 'fixed';
-      safeAreaRect.style.top = result.top + 'px';
-      safeAreaRect.style.left = result.left + 'px';
-      safeAreaRect.style.right = result.right + 'px';
-      safeAreaRect.style.bottom = result.bottom + 'px';
-      safeAreaRect.style.border = '3px solid blue';
-      safeAreaRect.style.backgroundColor = 'rgba(0, 0, 255, 0.1)';
-      safeAreaRect.style.pointerEvents = 'none';
-      safeAreaRect.style.zIndex = '9999';
-      safeAreaRect.style.display = 'block';
-      
-      // 3秒后隐藏矩形
-      setTimeout(() => {
-        safeAreaRect.style.display = 'none';
-      }, 3000);
-    }
-
-    function openWallet() {
-      window.MiniAppX.WebApp.openMiniAppXLink("https://t.me/MatrixBot102/mt_wallet")
-    }
-
-    function orientationLock() {
-      if(window.MiniAppX.WebApp.isOrientationLocked) {
-        window.MiniAppX.WebApp.unlockOrientation()
-      } else {
-       window.MiniAppX.WebApp.lockOrientation()
-      }
-    }
-
-    function selectContact() {
-      window.MiniAppX.WebApp.openMiniAppXLink("https://t.me/wallet?startattach=send-assetCurrency__&choose=users")
-    }
-
-    function getWalletAddress() {
-      window.MiniAppX.WebApp.invokeCustomMethod( "get_wallet_address", "1", (err,eventData)=> {
-        let walletAddressElement = document.querySelector(".walletAddress");
-        walletAddressElement.textContent = eventData;
-      })
-    }
-
-    function dismissConfirm() {
-      window.MiniAppX.WebApp.enableClosingConfirmation()
-    }
-
-    function showAlert() {
-      window.MiniAppX.WebApp.showAlert("Hello, MiniAppX!")
-    }
-
-    function openWindow() {
-      window.open("https://www.baidu.com")
-    }
-
-    function shareLink() {
-        window.MiniAppX.WebApp.openMiniAppXLink('https://t.me/share/url?url=https://miniappx.io/luckydramas_bot/luckydramas?startapp=base64(data)&text=__shortLink');
-    }
-
-    function showPopup() {
-        window.MiniAppX.WebApp.showPopup({
-        title: 'Popup title',
-        message: 'Popup message',
-        buttons: [
-          {id: 'delete', type: 'destructive', text: 'Delete all'},
-          {id: 'faq', type: 'default', text: 'Open FAQ'},
-          {type: 'cancel'},
-        ]
-      }, function(button_id) {
-        if (button_id == 'delete') {
-          window.MiniAppX.WebApp.showAlert("'Delete all' selected");
-        } else if (button_id == 'faq') {
-          window.MiniAppX.WebApp.openLink('https://docs.openweb3.io/reference/initialization-1');
+        function closeMiniApp(){
+          window.MiniAppX.WebApp.close()
         }
-      });
-    }
 
-    function requestWriteAccess() {
-      window.MiniAppX.WebApp.requestWriteAccess( (arrowed) => {
-        if( arrowed) {
-          notify("Send message to bot arrowed!")
-        } else {
-          notify("Send message to bot not arrowed!")
-        }
-      } )
-    }
-
-    function vibrationEffect() {
-      window.MiniAppX.WebApp.HapticFeedback.impactOccurred("heavy")
-    }
-
-    function qrcodeScan() {
-      window.MiniAppX.WebApp.showScanQrPopup( {text: 'Request scan qrcode by wallet.'}, result => {
-        notify(result);
-        return true
-      })
-    }
-
-    function hideHeadContainer() {
-      window.MiniAppX.WebApp.isActionBarVisible = !window.MiniAppX.WebApp.isActionBarVisible
-      document.getElementById("head").textContent = window.MiniAppX.WebApp.isActionBarVisible ? "Hide Action Bar" : "Show Action Bar"
-    }
-
-    function setFullScreen() {
-      if (window.MiniAppX.WebApp.isFullscreen) {
-          window.MiniAppX.WebApp.exitFullscreen()
-      } else {
-          window.MiniAppX.WebApp.requestFullscreen()
-      }
-
-      document.getElementById("fullscreen").textContent = window.MiniAppX.WebApp.isFullscreen ? "Exit FullScreen" : "Set FullScreen"
-    }
-
-    function showBackButton() {
-      window.MiniAppX.WebApp.BackButton.show()
-      window.MiniAppX.WebApp.BackButton.onClick(()=> {
-        window.MiniAppX.WebApp.BackButton.hide()
-      })
-    }
-
-    function showMainButton() {
-      window.MiniAppX.WebApp.MainButton.show()
-      window.MiniAppX.WebApp.MainButton.onClick(()=> {
-        window.MiniAppX.WebApp.MainButton.hide()
-      })
-    }
-
-    function showSettingButton() {
-      window.MiniAppX.WebApp.SettingsButton.isVisible = true
-      window.MiniAppX.WebApp.SettingsButton.onClick(()=> {
-        window.MiniAppX.WebApp.SettingsButton.isVisible = false
-      })
-    }
-
-    var biometryToken = ""
-
-    function initBiometryAccess() {
-     window.MiniAppX.WebApp.BiometricManager.init(() => {
-        notify( "Biometric init finish, isBiometricAvailable: " + window.MiniAppX.WebApp.BiometricManager.isBiometricAvailable);
-      })
-    }
-
-   function requestBiometryAccess() {
-      if (!checkBiometryAvailable()) {
-        return
-      }
-      window.MiniAppX.WebApp.BiometricManager.requestAccess({reason: "Test"}, (isAuthenticated) => {
-        notify( "BiometricManager isAuthenticated: " + isAuthenticated);
-      })
-    }
-
-    function requestBiometryAuth() {
-        if (!checkBiometryAvailable()) {
-          return
-        }
-        window.MiniAppX.WebApp.BiometricManager.authenticate({reason: "Test"}, (isAuthenticated, token) => {
-            biometryToken = token
-            notify( "BiometricManager isAuthenticated: " + isAuthenticated + ", token: " + token);
-         })
-    }
-
-    function updateBiometryToken() {
-      if (!checkBiometryAvailable()) {
-        return
-      }
-      window.MiniAppX.WebApp.BiometricManager.updateBiometricToken(biometryToken, (isUpdated) => {
-        notify( "BiometricManager Token isUpdated: " + isUpdated);
-      })
-    }
-
-    function openBiometrySettings() {
-      if (!checkBiometryAvailable()) {
-        return
-      }
-      window.MiniAppX.WebApp.BiometricManager.openSettings()
-    }
-
-    function checkBiometryAvailable() {
-      if (window.MiniAppX.WebApp.BiometricManager.isBiometricAvailable) {
-        return true
-      }
-       notify( "BiometricManager should be inited before using.");
-      return false
-    }
-
-    function requestLocation() {
-       if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function (position) {
-          notify('(' + position.coords.latitude + ', ' + position.coords.longitude + ')');
-        });
-      } else {
-        notify('Geolocation is not supported in this browser.');
-      }
-    }
-
-    function requestVideo() {
-        if (navigator.mediaDevices) {
-          navigator.mediaDevices.getUserMedia({ audio: false, video: true }).then(function(stream) {
-              notify('Video access granted');
+        function copyToClipboard(){
+          navigator.clipboard.writeText('Text to be copied')
+          .then(() => {
+            console.log('Text copied to clipboard');
+          })
+          .catch(err => {
+            // This can happen if the user denies clipboard permissions:
+            console.error('Could not copy text: ', err);
           });
-        } else {
-            notify('Media devices is not supported in this browser.');
         }
-    }
 
-    function requestAudio() {
-        if (navigator.mediaDevices) {
-            navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(function(stream) {
-                notify('Audio access granted');
+        function expandMiniApp(){
+          window.MiniAppX.WebApp.expand()
+        }
+
+        function disableExpand() {
+          window.MiniAppX.WebApp.isVerticalSwipesEnabled = !window.MiniAppX.WebApp.isVerticalSwipesEnabled
+          document.getElementById("expand").textContent = window.MiniAppX.WebApp.isVerticalSwipesEnabled ? "Disable Vertical Swipes" : "Enable Vertical Swipes"
+        }
+
+        function notify(text) {
+          let infoElement = document.querySelector(".info");
+
+          let timestamp = new Date().toLocaleTimeString();
+          let message = timestamp + ": " + text;
+
+          let logListElement = document.querySelector("#logList");
+          let listItem = document.createElement("li");
+          listItem.textContent = message;
+
+          logListElement.insertBefore(listItem, logListElement.firstChild);
+
+          console.log(message)
+        }
+
+        function sayHello(){
+          window.MiniAppX.WebApp.sayHello();
+          notify("MiniAppX MiniApp=> Hello, MiniAppX App!");
+        }
+
+        function contentSafeAreaInset() {
+          let result = window.MiniAppX.WebApp.contentSafeAreaInset;
+          notify("top: " + result.top + " left: " + result.left + " bottom: " + result.bottom + " right: " + result.right);
+
+          // 创建或更新蓝色矩形显示安全区域
+          let safeAreaRect = document.getElementById('safeAreaRect');
+          if (!safeAreaRect) {
+            safeAreaRect = document.createElement('div');
+            safeAreaRect.id = 'safeAreaRect';
+            document.body.appendChild(safeAreaRect);
+          }
+
+          // 设置矩形的位置和大小
+          safeAreaRect.style.position = 'fixed';
+          safeAreaRect.style.top = result.top + 'px';
+          safeAreaRect.style.left = result.left + 'px';
+          safeAreaRect.style.right = result.right + 'px';
+          safeAreaRect.style.bottom = result.bottom + 'px';
+          safeAreaRect.style.border = '3px solid blue';
+          safeAreaRect.style.backgroundColor = 'rgba(0, 0, 255, 0.1)';
+          safeAreaRect.style.pointerEvents = 'none';
+          safeAreaRect.style.zIndex = '9999';
+          safeAreaRect.style.display = 'block';
+
+          // 3秒后隐藏矩形
+          setTimeout(() => {
+            safeAreaRect.style.display = 'none';
+          }, 3000);
+        }
+
+        function openWallet() {
+          window.MiniAppX.WebApp.openMiniAppXLink("https://t.me/MatrixBot102/mt_wallet")
+        }
+
+        function orientationLock() {
+          if(window.MiniAppX.WebApp.isOrientationLocked) {
+            window.MiniAppX.WebApp.unlockOrientation()
+          } else {
+           window.MiniAppX.WebApp.lockOrientation()
+          }
+        }
+
+        function selectContact() {
+          window.MiniAppX.WebApp.openMiniAppXLink("https://t.me/wallet?startattach=send-assetCurrency__&choose=users")
+        }
+
+        function getWalletAddress() {
+          window.MiniAppX.WebApp.invokeCustomMethod( "get_wallet_address", "1", (err,eventData)=> {
+            let walletAddressElement = document.querySelector(".walletAddress");
+            walletAddressElement.textContent = eventData;
+          })
+        }
+
+        function dismissConfirm() {
+          window.MiniAppX.WebApp.enableClosingConfirmation()
+        }
+
+        function showAlert() {
+          window.MiniAppX.WebApp.showAlert("Hello, MiniAppX!")
+        }
+
+        function openWindow() {
+          window.open("https://www.baidu.com")
+        }
+
+        function shareLink() {
+            window.MiniAppX.WebApp.openMiniAppXLink('https://t.me/share/url?url=https://miniappx.io/luckydramas_bot/luckydramas?startapp=base64(data)');
+        }
+
+        function openShareByCustomMethod() {
+          window.MiniAppX.WebApp.invokeCustomMethod("share")
+        }
+
+        function showPopup() {
+            window.MiniAppX.WebApp.showPopup({
+            title: 'Popup title',
+            message: 'Popup message',
+            buttons: [
+              {id: 'delete', type: 'destructive', text: 'Delete all'},
+              {id: 'faq', type: 'default', text: 'Open FAQ'},
+              {type: 'cancel'},
+            ]
+          }, function(button_id) {
+            if (button_id == 'delete') {
+              window.MiniAppX.WebApp.showAlert("'Delete all' selected");
+            } else if (button_id == 'faq') {
+              window.MiniAppX.WebApp.openLink('https://docs.openweb3.io/reference/initialization-1');
+            }
+          });
+        }
+
+        function requestWriteAccess() {
+          window.MiniAppX.WebApp.requestWriteAccess( (arrowed) => {
+            if( arrowed) {
+              notify("Send message to bot arrowed!")
+            } else {
+              notify("Send message to bot not arrowed!")
+            }
+          } )
+        }
+
+        function vibrationEffect() {
+          window.MiniAppX.WebApp.HapticFeedback.impactOccurred("heavy")
+        }
+
+        function qrcodeScan() {
+          window.MiniAppX.WebApp.showScanQrPopup( {text: 'Request scan qrcode by wallet.'}, result => {
+            notify(result);
+            return true
+          })
+        }
+
+        function hideHeadContainer() {
+          window.MiniAppX.WebApp.isActionBarVisible = !window.MiniAppX.WebApp.isActionBarVisible
+          document.getElementById("head").textContent = window.MiniAppX.WebApp.isActionBarVisible ? "Hide Action Bar" : "Show Action Bar"
+        }
+
+        function setFullScreen() {
+          if (window.MiniAppX.WebApp.isFullscreen) {
+              window.MiniAppX.WebApp.exitFullscreen()
+          } else {
+              window.MiniAppX.WebApp.requestFullscreen()
+          }
+
+          document.getElementById("fullscreen").textContent = window.MiniAppX.WebApp.isFullscreen ? "Exit FullScreen" : "Set FullScreen"
+        }
+
+        function showBackButton() {
+          window.MiniAppX.WebApp.BackButton.show()
+          window.MiniAppX.WebApp.BackButton.onClick(()=> {
+            window.MiniAppX.WebApp.BackButton.hide()
+          })
+        }
+
+        function showMainButton() {
+          window.MiniAppX.WebApp.MainButton.show()
+          window.MiniAppX.WebApp.MainButton.onClick(()=> {
+            window.MiniAppX.WebApp.MainButton.hide()
+          })
+        }
+
+        function showSettingButton() {
+          window.MiniAppX.WebApp.SettingsButton.isVisible = true
+          window.MiniAppX.WebApp.SettingsButton.onClick(()=> {
+            window.MiniAppX.WebApp.SettingsButton.isVisible = false
+          })
+        }
+
+        var biometryToken = ""
+
+        function initBiometryAccess() {
+         window.MiniAppX.WebApp.BiometricManager.init(() => {
+            notify( "Biometric init finish, isBiometricAvailable: " + window.MiniAppX.WebApp.BiometricManager.isBiometricAvailable);
+          })
+        }
+
+       function requestBiometryAccess() {
+          if (!checkBiometryAvailable()) {
+            return
+          }
+          window.MiniAppX.WebApp.BiometricManager.requestAccess({reason: "Test"}, (isAuthenticated) => {
+            notify( "BiometricManager isAuthenticated: " + isAuthenticated);
+          })
+        }
+
+        function requestBiometryAuth() {
+            if (!checkBiometryAvailable()) {
+              return
+            }
+            window.MiniAppX.WebApp.BiometricManager.authenticate({reason: "Test"}, (isAuthenticated, token) => {
+                biometryToken = token
+                notify( "BiometricManager isAuthenticated: " + isAuthenticated + ", token: " + token);
+             })
+        }
+
+        function updateBiometryToken() {
+          if (!checkBiometryAvailable()) {
+            return
+          }
+          window.MiniAppX.WebApp.BiometricManager.updateBiometricToken(biometryToken, (isUpdated) => {
+            notify( "BiometricManager Token isUpdated: " + isUpdated);
+          })
+        }
+
+        function openBiometrySettings() {
+          if (!checkBiometryAvailable()) {
+            return
+          }
+          window.MiniAppX.WebApp.BiometricManager.openSettings()
+        }
+
+        function checkBiometryAvailable() {
+          if (window.MiniAppX.WebApp.BiometricManager.isBiometricAvailable) {
+            return true
+          }
+           notify( "BiometricManager should be inited before using.");
+          return false
+        }
+
+        function requestLocation() {
+           if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function (position) {
+              notify('(' + position.coords.latitude + ', ' + position.coords.longitude + ')');
             });
-        } else {
-            notify('Media devices is not supported in this browser.');
+          } else {
+            notify('Geolocation is not supported in this browser.');
+          }
         }
-    }
 
-    function requestAudioVideo() {
-        if (navigator.mediaDevices) {
-            navigator.mediaDevices.getUserMedia({ audio: true, video: true }).then(function(stream) {
-                notify('Audio and video access granted');
-            });
-        } else {
-            notify('Media devices is not supported in this browser.');
+        function requestVideo() {
+            if (navigator.mediaDevices) {
+              navigator.mediaDevices.getUserMedia({ audio: false, video: true }).then(function(stream) {
+                  notify('Video access granted');
+              });
+            } else {
+                notify('Media devices is not supported in this browser.');
+            }
         }
-    }
 
-    function requestFileChoose() {
-      var fileInput = document.getElementById('fileInput');
-      fileInput.click();
-    }
+        function requestAudio() {
+            if (navigator.mediaDevices) {
+                navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(function(stream) {
+                    notify('Audio access granted');
+                });
+            } else {
+                notify('Media devices is not supported in this browser.');
+            }
+        }
 
-    function openImage(event) {
-       var file = event.target.files[0];
-       var reader = new FileReader();
+        function requestAudioVideo() {
+            if (navigator.mediaDevices) {
+                navigator.mediaDevices.getUserMedia({ audio: true, video: true }).then(function(stream) {
+                    notify('Audio and video access granted');
+                });
+            } else {
+                notify('Media devices is not supported in this browser.');
+            }
+        }
 
-       reader.onload = function(e) {
-          var selectedImage = document.getElementById('selectedImage');
-          selectedImage.src = e.target.result;
-             selectedImage.style.display = 'block';
+        function requestFileChoose() {
+          var fileInput = document.getElementById('fileInput');
+          fileInput.click();
+        }
+
+        function openImage(event) {
+           var file = event.target.files[0];
+           var reader = new FileReader();
+
+           reader.onload = function(e) {
+              var selectedImage = document.getElementById('selectedImage');
+              selectedImage.src = e.target.result;
+                 selectedImage.style.display = 'block';
+              };
+
+           reader.readAsDataURL(file);
+       }
+
+       function startAccelerometer() {
+          window.MiniAppX.WebApp.Accelerometer.start()
+       }
+
+       function stopAccelerometer() {
+          window.MiniAppX.WebApp.Accelerometer.stop()
+       }
+
+       function startGyroscope() {
+          window.MiniAppX.WebApp.Gyroscope.start()
+       }
+
+       function stopGyroscope() {
+        window.MiniAppX.WebApp.Gyroscope.stop()
+       }
+
+       function startDeviceOrientation() {
+          window.MiniAppX.WebApp.DeviceOrientation.start()
+       }
+
+       function stopDeviceOrientation() {
+          window.MiniAppX.WebApp.DeviceOrientation.stop()
+       }
+
+       function getShareUrl() {
+          const data = {
+              start_param: 'your_custom_parameters_here' ,
+              space_id: 'space id' ,
+              title: '精彩内容分享',
+              description: '快来看看这个有趣的内容',
+              image_url: 'https://cdn.example.com/share-image.jpg'
           };
+          window.MiniAppX.WebApp.invokeCustomMethod( "generateShareLink", data, (err,eventData)=> {
+              const jsonObj = JSON.parse(eventData);
+              notify(jsonObj.short_url);
+          })
+       }
 
-       reader.readAsDataURL(file);
-   }
+        window.MiniAppX.WebApp.onEvent("activated", (eventType, eventData)=> {
+          notify( "MiniApp is activated");
+        })
 
-   function startAccelerometer() {
-      window.MiniAppX.WebApp.Accelerometer.start()
-   }
+        window.MiniAppX.WebApp.onEvent("deactivated", (eventType, eventData)=> {
+            notify( "MiniApp is deactivated");
+        })
 
-   function stopAccelerometer() {
-      window.MiniAppX.WebApp.Accelerometer.stop()
-   }
+        window.MiniAppX.WebApp.onEvent("safeAreaChanged", (eventType, eventData)=> {
+            let result = window.MiniAppX.WebApp.safeAreaInset;
+            notify("safeArea top: " + result.top + " left: " + result.left + " bottom: " + result.bottom + " right: " + result.right);
+        })
 
-   function startGyroscope() {
-      window.MiniAppX.WebApp.Gyroscope.start()
-   }
+        window.MiniAppX.WebApp.onEvent("contentSafeAreaChanged", (eventType, eventData)=> {
+          let result = window.MiniAppX.WebApp.contentSafeAreaInset;
+          notify("contentSafeArea top: " + result.top + " left: " + result.left + " bottom: " + result.bottom + " right: " + result.right);
+        })
 
-   function stopGyroscope() {
-    window.MiniAppX.WebApp.Gyroscope.stop()
-   }
+        window.MiniAppX.WebApp.onEvent("deviceOrientationChanged", (eventType, eventData)=> {
+          document.getElementById("orientation").textContent = window.MiniAppX.WebApp.isOrientationLocked ? "UnLock Orientation" : "Lock Orientation"
+        })
 
-   function startDeviceOrientation() {
-      window.MiniAppX.WebApp.DeviceOrientation.start()
-   }
+        window.MiniAppX.WebApp.onEvent("notify", (eventType, eventData)=> {
+          notify( "MiniAppX App=>" + eventData.msg);
+        })
 
-   function stopDeviceOrientation() {
-      window.MiniAppX.WebApp.DeviceOrientation.stop()
-   }
+        document.addEventListener('DOMContentLoaded', function() {
+            notify("WebApp init success. Version: " + window.MiniAppX.WebApp.version);
+        });
 
-    window.MiniAppX.WebApp.onEvent("activated", (eventType, eventData)=> {
-      notify( "MiniApp is activated");
-    })
-
-    window.MiniAppX.WebApp.onEvent("deactivated", (eventType, eventData)=> {
-        notify( "MiniApp is deactivated");
-    })
-
-    window.MiniAppX.WebApp.onEvent("contentSafeAreaChanged", (eventType, eventData)=> {
-      let result = window.MiniAppX.WebApp.contentSafeAreaInset;
-      notify("contentSafeArea top: " + result.top + " left: " + result.left + " bottom: " + result.bottom + " right: " + result.right);
-    })
-
-    window.MiniAppX.WebApp.onEvent("deviceOrientationChanged", (eventType, eventData)=> {
-      document.getElementById("orientation").textContent = window.MiniAppX.WebApp.isOrientationLocked ? "UnLock Orientation" : "Lock Orientation"
-    })
-
-    window.MiniAppX.WebApp.onEvent("notify", (eventType, eventData)=> {
-      notify( "MiniAppX App=>" + eventData.msg);
-    })
-
-    document.addEventListener('DOMContentLoaded', function() {
-        notify("WebApp init success. Version: " + window.MiniAppX.WebApp.version);
-    });
-
-  </script>
-  <style>
-    body {background-color: powderblue; margin: 0px}
-    button {font-size: 20px; min-height: 50px; padding: 10px 10px; margin-top: 10px; border-radius: 8px}
-    .app {padding: 10px 10px 150px 10px; display: flex; flex-direction: column; align-items: start; align-content: start}
-    .t {font-size: 30px; font-weight: bold;}
-    .info {height: 100px; position: fixed; bottom: 0; overflow: auto; padding: 10px; background-color: #000000; color: #FFFFFF; font-size: 15px; width: 100%; justify-content: left}
-    .walletAddress { padding: 0; font-size: 30px; color: #180d68; font-weight: bold }
-  </style>
+    </script>
+    <style>
+        body {background-color: powderblue; margin: 0px}
+        button {font-size: 20px; min-height: 50px; padding: 10px 10px; margin-top: 10px; border-radius: 8px}
+        .app {padding: 10px 10px 150px 10px; display: flex; flex-direction: column; align-items: start; align-content: start}
+        .t {font-size: 30px; font-weight: bold;}
+        .info {height: 100px; position: fixed; bottom: 0; overflow: auto; padding: 10px; background-color: #000000; color: #FFFFFF; font-size: 15px; width: 100%; justify-content: left}
+        .walletAddress { padding: 0; font-size: 30px; color: #180d68; font-weight: bold }
+    </style>
 </head>
 <body>
 <div class="app">
-  <button onclick="sayHello()">Say Hello</button>
+    <button onclick="sayHello()">Say Hello</button>
 
-  <p class="t">Behaviors</p>
-  <button onclick="closeMiniApp()">Close MiniApp</button>
-  <button id="head" onclick="hideHeadContainer()">Hide Action Bar</button>
-  <button id="fullscreen" onclick="setFullScreen()">Set FullScreen</button>
-  <button onclick="expandMiniApp()">Expand MiniApp</button>
-  <button id="expand" onclick="disableExpand()">Disable Vertical Swipes</button>
-  <button onclick="dismissConfirm()">Enable Dismiss Confirm</button>
-  <button onclick="contentSafeAreaInset()">Safe Content Area</button>
-  <button id="orientation" onclick="orientationLock()">Orientation Lock</button>
+    <p class="t">Behaviors</p>
+    <button onclick="closeMiniApp()">Close MiniApp</button>
+    <button id="head" onclick="hideHeadContainer()">Hide Action Bar</button>
+    <button id="fullscreen" onclick="setFullScreen()">Set FullScreen</button>
+    <button onclick="expandMiniApp()">Expand MiniApp</button>
+    <button id="expand" onclick="disableExpand()">Disable Vertical Swipes</button>
+    <button onclick="dismissConfirm()">Enable Dismiss Confirm</button>
+    <button onclick="contentSafeAreaInset()">Safe Content Area</button>
+    <button id="orientation" onclick="orientationLock()">Orientation Lock</button>
 
-  <p class="t">Actions</p>
-  <button onclick="showAlert()">Show Alert</button>
-  <button onclick="showPopup()">Show Popup</button>
-  <button onclick="requestWriteAccess()">Send Message Access</button>
-  <button onclick="vibrationEffect()">Vibration Effect</button>
-  <button onclick="qrcodeScan()">Qrcode Scan</button>
-  <button onclick="openWallet()">Launch New MiniApp</button>
-  <button onclick="selectContact()">Select Contact</button>
-  <button onclick="openWindow()">Open Window</button>
-  <button onclick="shareLink()">Share Link</button>
+    <p class="t">Actions</p>
+    <button onclick="showAlert()">Show Alert</button>
+    <button onclick="showPopup()">Show Popup</button>
+    <button onclick="requestWriteAccess()">Send Message Access</button>
+    <button onclick="vibrationEffect()">Vibration Effect</button>
+    <button onclick="qrcodeScan()">Qrcode Scan</button>
+    <button onclick="openWallet()">Launch New MiniApp</button>
+    <button onclick="selectContact()">Select Contact</button>
+    <button onclick="openWindow()">Open Window</button>
+    <button onclick="shareLink()">Share Link</button>
+    <button onclick="openShareByCustomMethod()">Share By Custom Method</button>
 
-  <p class="t">Open Link</p>
-  <a href="https://t.me/apps/10?param=1">https://t.me/apps/10?param=1</a>
-  <a href="https://www.google.com">https://www.google.com</a>
-  <a href="https://t.me/gameing?start=120aa1ba">https://t.me/gameing?start=120aa1ba</a>
+    <p class="t">Open Link</p>
+    <button onclick="getShareUrl()">Get Share Url</button>
+    <a href="https://t.me/apps/10?param=1">https://t.me/apps/10?param=1</a>
+    <a href="https://www.google.com">https://www.google.com</a>
+    <a href="https://t.me/gameing?start=120aa1ba">https://t.me/gameing?start=120aa1ba</a>
 
-  <p class="t">Buttons</p>
-  <button onclick="showBackButton()">Show Back Button</button>
-  <button onclick="showMainButton()">Show Main Button</button>
-  <button onclick="showSettingButton()">Show Setting Button</button>
+    <p class="t">Buttons</p>
+    <button onclick="showBackButton()">Show Back Button</button>
+    <button onclick="showMainButton()">Show Main Button</button>
+    <button onclick="showSettingButton()">Show Setting Button</button>
 
-  <p class="t">BiometricManager</p>
-  <button onclick="initBiometryAccess()">Init BiometricManager</button>
-  <button onclick="requestBiometryAccess()">Request Biometry Access</button>
-  <button onclick="requestBiometryAuth()">Request Biometry Auth</button>
-  <button onclick="updateBiometryToken()">Update Biometry Token</button>
-  <button onclick="openBiometrySettings()">Open Biometry Settings</button>
+    <p class="t">BiometricManager</p>
+    <button onclick="initBiometryAccess()">Init BiometricManager</button>
+    <button onclick="requestBiometryAccess()">Request Biometry Access</button>
+    <button onclick="requestBiometryAuth()">Request Biometry Auth</button>
+    <button onclick="updateBiometryToken()">Update Biometry Token</button>
+    <button onclick="openBiometrySettings()">Open Biometry Settings</button>
 
-  <p class="t">Permission</p>
-  <button onclick="requestLocation()">Request Location</button>
-  <button onclick="requestVideo()">Request Video</button>
-  <button onclick="requestAudio()">Request Audio</button>
-  <button onclick="requestAudioVideo()">Request Video And Audio</button>
-  <input type="file" id="fileInput" style="display: none;" accept="image/*" onchange="openImage(event)">
-  <button onclick="requestFileChoose()">Request File Choose</button>
-  <button onclick="copyToClipboard()">Copy To Clipboard</button>
-  <img id="selectedImage" src="" style="display: none; max-width: 100%; max-height: 100%;">
+    <p class="t">Permission</p>
+    <button onclick="requestLocation()">Request Location</button>
+    <button onclick="requestVideo()">Request Video</button>
+    <button onclick="requestAudio()">Request Audio</button>
+    <button onclick="requestAudioVideo()">Request Video And Audio</button>
+    <input type="file" id="fileInput" style="display: none;" accept="image/*" onchange="openImage(event)">
+    <button onclick="requestFileChoose()">Request File Choose</button>
+    <button onclick="copyToClipboard()">Copy To Clipboard</button>
+    <img id="selectedImage" src="" style="display: none; max-width: 100%; max-height: 100%;">
 
-  <p class="t">Sensor</p>
-  <button onclick="startAccelerometer()">Start Accelerometer</button>
-  <button onclick="stopAccelerometer()">Stop Accelerometer</button>
-  <button onclick="startGyroscope()">Start Gyroscope</button>
-  <button onclick="stopGyroscope()">Stop Gyroscope</button>
-  <button onclick="startDeviceOrientation()">Start Device Orientation</button>
-  <button onclick="stopDeviceOrientation()">Stop Device Orientation</button>
+    <p class="t">Sensor</p>
+    <button onclick="startAccelerometer()">Start Accelerometer</button>
+    <button onclick="stopAccelerometer()">Stop Accelerometer</button>
+    <button onclick="startGyroscope()">Start Gyroscope</button>
+    <button onclick="stopGyroscope()">Stop Gyroscope</button>
+    <button onclick="startDeviceOrientation()">Start Device Orientation</button>
+    <button onclick="stopDeviceOrientation()">Stop Device Orientation</button>
 
-  <p class="t">System Compose</p>
-  <select name="pets" id="pet-select">
-    <option value="dog">Dog</option>
-    <option value="cat">Cat</option>
-    <option value="hamster">Hamster</option>
-    <option value="parrot">Parrot</option>
-    <option value="spider">Spider</option>
-    <option value="goldfish">Goldfish</option>
-  </select>
+    <p class="t">System Compose</p>
+    <select name="pets" id="pet-select">
+        <option value="dog">Dog</option>
+        <option value="cat">Cat</option>
+        <option value="hamster">Hamster</option>
+        <option value="parrot">Parrot</option>
+        <option value="spider">Spider</option>
+        <option value="goldfish">Goldfish</option>
+    </select>
 
-  <select name="cars" id="cars">
-    <optgroup label="Swedish Cars">
-      <option value="volvo">Volvo</option>
-      <option value="saab">Saab</option>
-    </optgroup>
-    <optgroup label="German Cars">
-      <option value="mercedes">Mercedes</option>
-      <option value="audi">Audi</option>
-    </optgroup>
-  </select>
-  <input type="date" id="date_xp4qc3b7p"
+    <select name="cars" id="cars">
+        <optgroup label="Swedish Cars">
+            <option value="volvo">Volvo</option>
+            <option value="saab">Saab</option>
+        </optgroup>
+        <optgroup label="German Cars">
+            <option value="mercedes">Mercedes</option>
+            <option value="audi">Audi</option>
+        </optgroup>
+    </select>
+    <input type="date" id="date_xp4qc3b7p"
            value="2026-01-01">
-  <input type="time" id="appointment-time"
+    <input type="time" id="appointment-time"
            min="09:00"
            max="18:00"
            step="1800">
-  <input type="file"/>
+    <input type="file"/>
 
 </div>
 <ul class="info" id="logList"></ul>

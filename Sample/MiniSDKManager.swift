@@ -92,7 +92,7 @@ class MiniSDKManager: NSObject, IAppDelegate, BridgeProviderFactory {
             
             let appConfig = AppConfig.Builder(appName: "Sample2",
                                               webAppName: "MiniAppX",
-                                              mePath: ["https://miniappx.io","https://t.me"],
+                                              mePath: ["https://miniappx.io","https://t.me","https://openweb3.io"],
                                               window: window,
                                               appDelegate: MiniSDKManager.shared)
                 .languageCode("zh")
@@ -199,19 +199,17 @@ class MiniSDKManager: NSObject, IAppDelegate, BridgeProviderFactory {
         }
     }
     
-    var customMethodProvider: (IMiniApp, String, String?, @escaping (String?) -> Void )-> Bool = { _, method, params, callback in
+    var customMethodProvider: (IMiniApp, String, String?) async -> (Bool,String?) = { _, method, params in
         if(method == "getRoomConfig") {
             // TODO Return current tribe to add to App IDs
-            callback("{\"miniapps\": [\"10\"]}")
-            return true
+            return (true,"{\"miniapps\": [\"10\"]}")
         }
         if(method == "updateRoomConfig") {
             // 1. TODO Update apps to tribe
-            callback(nil)
-            return true
+            return (true, nil)
         }
-        callback("TODO: To implement Custom Method in AppDelegate, Method called: \(method)")
-        return false
+        
+        return (false, "TODO: To implement Custom Method in AppDelegate, Method called: \(method)")
     }
     
     var qrcodeProvider: (IMiniApp, String?, @escaping (String?) -> Void) -> UINavigationController? = { _, desc, callback in
@@ -326,10 +324,16 @@ class MiniSDKManager: NSObject, IAppDelegate, BridgeProviderFactory {
             if code == 401 {
                 signIn()
             }
+            showToast("Api Error Code: \(code), message: \(message)")
         default:
             break
         }
     }
+    
+    func showToast(_ message: String) {
+        ToastManager.shared.showToast(message: message)
+    }
+
     
     func onMinimization(app: any MiniAppX.IMiniApp) {
         
